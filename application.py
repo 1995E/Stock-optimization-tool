@@ -216,7 +216,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 color='FASD',
                 points="all",
                 color_discrete_sequence=px.colors.sequential.Plotly3_r,
-                #title="Material Value Ranges across FASD Categories"
+               
             )
             fig_box.update_layout(
                 plot_bgcolor="rgba(0,0,0,0)",
@@ -241,7 +241,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 color="Category",
                 barmode="group",
                 color_discrete_map={"TO BE SCRAPPED": "#334155", "TO BE TRANSFERRED": "#0284c7"},
-                #title="Total Portfolio Financial Value by Discipline"
+              
             )
             fig_bar_group.update_layout(
                 plot_bgcolor="rgba(0,0,0,0)",
@@ -322,7 +322,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
         "Total Removed Materials",
         "Total Stock Materials",
         "Stock Qty > 0 (All Plants)",
-        f"{plant} Stock (Scrapped)",
+        f"{plant} Stock (Potential scrap)",
         f"To Be Transferred ({plant})"
     ]
     counts = [stage1_count, stage2_count, stage3_count, stage4_count, stage_transferred_count]
