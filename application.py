@@ -110,9 +110,9 @@ if uploaded_materials is not None and uploaded_prices is not None:
     Interested_plant_stock_value = (Interested_plant['Stock qty'] * Interested_plant['Unit price']).sum()
 
     # Categorization logic
-    other_active_materials = stock_greater_zero[
-        (stock_greater_zero['Plant'] != plant) &
-        (stock_greater_zero['FASD'].str.upper() != 'DEAD')
+    other_active_materials = pd_v1_df [
+        (pd_v1_df['Plant'] != plant) &
+        (pd_v1_df['FASD'].str.upper() != 'DEAD')
     ]['Material n°'].unique()
 
     def categorize_material(row):
