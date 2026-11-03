@@ -15,7 +15,7 @@ st.set_page_config(
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
+        
         html, body, [class*="css"] {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
@@ -111,7 +111,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
 
     # Categorization logic
     other_active_materials = pd_v1_df [
-        (pd_v1_df['Plant'] != plant) & 
+        (pd_v1_df['Plant'] != plant) &
         (pd_v1_df['FASD'].str.upper() != 'DEAD')
     ]['Material n°'].unique()
 
@@ -182,7 +182,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 color='Category',
                 color_discrete_map=color_map,
                 title="General Classification Distribution"
-
+        
             )
             fig_pie.update_traces(textinfo='percent+label', pull=[0.02] * len(category_counts))
             fig_pie.update_layout(
@@ -191,7 +191,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 margin=dict(l=40, r=40, t=60, b=40),
                 paper_bgcolor="rgba(0,0,0,0)",
                 font=dict(family="Inter, sans-serif", size=12)
-
+            
             )
             st.plotly_chart(fig_pie, use_container_width=True)
     else:
@@ -216,7 +216,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 color='FASD',
                 points="all",
                 color_discrete_sequence=px.colors.sequential.Plotly3_r,
-
+               
             )
             fig_box.update_layout(
                 plot_bgcolor="rgba(0,0,0,0)",
@@ -241,7 +241,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 color="Category",
                 barmode="group",
                 color_discrete_map={"TO BE SCRAPPED": "#334155", "TO BE TRANSFERRED": "#0284c7"},
-
+              
             )
             fig_bar_group.update_layout(
                 plot_bgcolor="rgba(0,0,0,0)",
@@ -411,32 +411,17 @@ if uploaded_materials is not None and uploaded_prices is not None:
     with st.sidebar:
         st.markdown("--- ")
         st.header("📦 Download the Results")
-        
-        # Prepare material lists for Excel export
-        # Sheet 1: Active materials of the plant
-        export_df = Interested_plant.drop(columns=['Total Value'], errors='ignore') if not Interested_plant.empty else pd.DataFrame()
-        
-        # Sheet 2: Stock equal to zero belonging to the selected plant
-        zero_stock_df = pd_v1_df[(pd_v1_df['Plant'] == plant) & (pd_v1_df['Stock qty'] == 0)].copy()
-        
-        if not export_df.empty or not zero_stock_df.empty:
+        if not Interested_plant.empty:
             buffer = io.BytesIO()
+            export_df = Interested_plant.drop(columns=['Total Value'], errors='ignore')
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                if not export_df.empty:
-                    export_df.to_excel(writer, index=False, sheet_name=f'{plant}_Materials')
-                else:
-                    # Keep a placeholder sheet if empty
-                    pd.DataFrame(columns=requested_columns).to_excel(writer, index=False, sheet_name=f'{plant}_Materials')
-                
-                # Write the 'to update the MRP' sheet
-                zero_stock_df.to_excel(writer, index=False, sheet_name='to update the MRP')
-                
+                export_df.to_excel(writer, index=False, sheet_name=f'{plant}_Materials')
             buffer.seek(0)
 
             st.download_button(
-                label=f"📥 {plant} Materials Export (Excel)",
+                label=f"📥 {plant} Materials for Scrap (Excel)",
                 data=buffer,
-                file_name=f"{plant}_potential_materials_report.xlsx",
+                file_name=f"{plant}_potential_materials_for_scrap.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
         else:
