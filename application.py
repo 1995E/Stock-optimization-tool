@@ -182,6 +182,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 color='Category',
                 color_discrete_map=color_map,
                 title="General Classification Distribution"
+                title.center
             )
             fig_pie.update_traces(textinfo='percent+label', pull=[0.02] * len(category_counts))
             fig_pie.update_layout(
