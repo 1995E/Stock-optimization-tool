@@ -201,7 +201,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
     st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
 
     # NEW INTERACTIVE ANALYSIS SECTION
-    st.markdown("### 🔍 Advanced Stock Insights (New Plots)")
+    st.markdown("### 🔍 Advanced Stock Insights")
     col_new1, col_new2 = st.columns(2)
 
     with col_new1:
@@ -216,7 +216,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 color='FASD',
                 points="all",
                 color_discrete_sequence=px.colors.sequential.Plotly3_r,
-                title="Material Value Ranges across FASD Categories"
+                #title="Material Value Ranges across FASD Categories"
             )
             fig_box.update_layout(
                 plot_bgcolor="rgba(0,0,0,0)",
@@ -241,7 +241,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 color="Category",
                 barmode="group",
                 color_discrete_map={"TO BE SCRAPPED": "#334155", "TO BE TRANSFERRED": "#0284c7"},
-                title="Total Portfolio Financial Value by Discipline"
+                #title="Total Portfolio Financial Value by Discipline"
             )
             fig_bar_group.update_layout(
                 plot_bgcolor="rgba(0,0,0,0)",
