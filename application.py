@@ -177,29 +177,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
     st.markdown("### 🔍 Advanced Stock Insights (New Plots)")
     col_new1, col_new2 = st.columns(2)
 
-    with col_new1:
-        # 1. Hierarchical Stock Value Treemap by Discipline & Material
-        st.markdown("**Material Discipline vs. Value Distribution (Treemap)**")
-        if not Interested_plant.empty:
-            Interested_plant['Total Value'] = Interested_plant['Stock qty'] * Interested_plant['Unit price']
-            # Clean up missing descriptions/disciplines
-            treemap_df = Interested_plant.copy()
-            treemap_df['Material discipline'] = treemap_df['Material discipline'].fillna('Undefined')
-            treemap_df['Material description'] = treemap_df['Material description'].fillna('No Description')
-            
-            fig_treemap = px.treemap(
-                treemap_df,
-                path=['Material discipline', 'Material description'],
-                values='Total Value',
-                color='Total Value',
-                color_continuous_scale='Blues',
-                title=f"Inventory Value Breakdown by Discipline in {plant}"
-            )
-            fig_treemap.update_layout(margin=dict(t=40, l=10, r=10, b=10))
-            st.plotly_chart(fig_treemap, use_container_width=True)
-        else:
-            st.info("No stock data available to display Treemap.")
-
+    
     with col_new2:
         # 2. Box / Strip Plot showing Stock Value and FASD Status Distribution
         st.markdown("**FASD Status vs. Stock Value Distribution**")
