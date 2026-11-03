@@ -128,17 +128,17 @@ if uploaded_materials is not None and uploaded_prices is not None:
         Interested_plant['Category'] = pd.Series(dtype='object')
 
     # 3. HIGHLY VISUAL KPI METRICS SECTION
-    st.markdown("### Key Performance Indicators")
+    st.markdown("### MAIN HIGHLIGHT")
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
     with kpi1:
         st.markdown(f'<div class="metric-card"><h6>Total Removed Materials</h6><h3>{Total_removed_materials:,}</h3></div>', unsafe_allow_html=True)
     with kpi2:
-        st.markdown(f'<div class="metric-card"><h6>Unique Stock Materials (PD/V1)</h6><h3>{len(pd_v1_unique_materials):,}</h3></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-card"><h6>TOTAL STOCK MATERRIAS</h6><h3>{len(pd_v1_unique_materials):,}</h3></div>', unsafe_allow_html=True)
     with kpi3:
         st.markdown(f'<div class="metric-card"><h6>Total Stock Value (USD)</h6><h3>${Total_stock_value:,.2f}</h3></div>', unsafe_allow_html=True)
     with kpi4:
-        st.markdown(f'<div class="metric-card"><h6>{plant} Stock Value (USD)</h6><h3>${Interested_plant_stock_value:,.2f}</h3></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-card"><h6>POTENTIAL {plant} DEAD STOCK VALUE(USD)</h6><h3>${Interested_plant_stock_value:,.2f}</h3></div>', unsafe_allow_html=True)
 
     # Separator after KPIs
     st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
