@@ -182,7 +182,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 color='Category',
                 color_discrete_map=color_map,
                 title="General Classification Distribution"
-                title.center
+        
             )
             fig_pie.update_traces(textinfo='percent+label', pull=[0.02] * len(category_counts))
             fig_pie.update_layout(
@@ -190,8 +190,9 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 legend=dict(orientation="h", yanchor="bottom", y=-0.1, xanchor="center", x=0.5),
                 margin=dict(l=40, r=40, t=60, b=40),
                 paper_bgcolor="rgba(0,0,0,0)",
-                title_x = 0.5,
+                title_x = 0.5
                 font=dict(family="Inter, sans-serif", size=12)
+            
             )
             st.plotly_chart(fig_pie, use_container_width=True)
     else:
