@@ -14,6 +14,11 @@ st.set_page_config(
 # Custom CSS to inject an ultra-clean modern corporate layout style and styled dividers
 st.markdown("""
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        html, body, [class*="css"] {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
         .main {
             background-color: #f8fafc;
         }
@@ -22,12 +27,13 @@ st.markdown("""
             padding: 24px;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            border-top: 4px solid #1e3a8a;
+            border-top: 4px solid #0f172a;
             text-align: center;
             margin-bottom: 15px;
         }
         .metric-card h6 {
             color: #475569;
+            font-family: 'Inter', sans-serif;
             font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -35,6 +41,7 @@ st.markdown("""
         }
         .metric-card h3 {
             color: #0f172a;
+            font-family: 'Inter', sans-serif;
             font-size: 1.8rem;
             font-weight: 700;
             margin: 0;
@@ -144,19 +151,20 @@ if uploaded_materials is not None and uploaded_prices is not None:
 
         with col_left:
             cross_tab = pd.crosstab(Interested_plant['FASD'], Interested_plant['Category'])
-            # IMPROVED COLOR: 'dense' is a beautiful, professional navy/purple heatmap color scheme
+            # IMPROVED COLOR: 'Ice' or 'deep' offers exceptionally clear, professional stakeholder visualization
             fig_heat = px.imshow(
                 cross_tab,
                 text_auto=True,
                 aspect="auto",
-                color_continuous_scale="dense",
+                color_continuous_scale="ice",
                 labels=dict(x="Category", y="FASD Status", color="Material Quantity"),
                 title="Distribution per FASD Status"
             )
             fig_heat.update_layout(
                 margin=dict(l=40, r=40, t=60, b=40),
                 plot_bgcolor="rgba(0,0,0,0)",
-                paper_bgcolor="rgba(0,0,0,0)"
+                paper_bgcolor="rgba(0,0,0,0)",
+                font=dict(family="Inter, sans-serif", size=12)
             )
             st.plotly_chart(fig_heat, use_container_width=True)
 
@@ -164,8 +172,8 @@ if uploaded_materials is not None and uploaded_prices is not None:
             category_counts = Interested_plant['Category'].value_counts().reset_index()
             category_counts.columns = ['Category', 'Count']
 
-            # IMPROVED COLORS: Steel/Slate Gray for Scrapped, Sophisticated Teal/Emerald for Transferred
-            color_map = {"TO BE SCRAPPED": "#475569", "TO BE TRANSFERRED": "#0d9488"}
+            # IMPROVED COLORS: Muted Slate Gray for Scrapped, Executive Cyan/Blue for Transferred
+            color_map = {"TO BE SCRAPPED": "#334155", "TO BE TRANSFERRED": "#0284c7"}
             fig_pie = px.pie(
                 category_counts,
                 values='Count',
@@ -180,7 +188,8 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 showlegend=True,
                 legend=dict(orientation="h", yanchor="bottom", y=-0.1, xanchor="center", x=0.5),
                 margin=dict(l=40, r=40, t=60, b=40),
-                paper_bgcolor="rgba(0,0,0,0)"
+                paper_bgcolor="rgba(0,0,0,0)",
+                font=dict(family="Inter, sans-serif", size=12)
             )
             st.plotly_chart(fig_pie, use_container_width=True)
     else:
@@ -197,14 +206,14 @@ if uploaded_materials is not None and uploaded_prices is not None:
         st.markdown("**FASD Status vs. Stock Value Distribution**")
         if not Interested_plant.empty:
             Interested_plant['Total Value'] = Interested_plant['Stock qty'] * Interested_plant['Unit price']
-            # Clean, premium steel blue palette
+            # Clean, premium grey-blue palette suited for corporate boards
             fig_box = px.box(
                 Interested_plant,
                 x='FASD',
                 y='Total Value',
                 color='FASD',
                 points="all",
-                color_discrete_sequence=px.colors.sequential.Blues_r,
+                color_discrete_sequence=px.colors.sequential.Plotly3_r,
                 title="Material Value Ranges across FASD Categories"
             )
             fig_box.update_layout(
@@ -212,7 +221,8 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 paper_bgcolor="rgba(0,0,0,0)",
                 yaxis_title="Value per Stock Item (USD)",
                 xaxis_title="FASD Movement Code",
-                margin=dict(t=40, l=40, r=40, b=40)
+                margin=dict(t=40, l=40, r=40, b=40),
+                font=dict(family="Inter, sans-serif", size=12)
             )
             st.plotly_chart(fig_box, use_container_width=True)
         else:
@@ -228,13 +238,14 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 y="Total Value",
                 color="Category",
                 barmode="group",
-                color_discrete_map={"TO BE SCRAPPED": "#475569", "TO BE TRANSFERRED": "#0d9488"},
+                color_discrete_map={"TO BE SCRAPPED": "#334155", "TO BE TRANSFERRED": "#0284c7"},
                 title="Total Portfolio Financial Value by Discipline"
             )
             fig_bar_group.update_layout(
                 plot_bgcolor="rgba(0,0,0,0)",
                 paper_bgcolor="rgba(0,0,0,0)",
-                yaxis_title="Total Financial Value (USD)"
+                yaxis_title="Total Financial Value (USD)",
+                font=dict(family="Inter, sans-serif", size=12)
             )
             st.plotly_chart(fig_bar_group, use_container_width=True)
         else:
@@ -253,14 +264,15 @@ if uploaded_materials is not None and uploaded_prices is not None:
             color="Category",
             size="Total Value",
             hover_data=["Material n°", "Material description"],
-            color_discrete_map={"TO BE SCRAPPED": "#475569", "TO BE TRANSFERRED": "#0d9488"},
+            color_discrete_map={"TO BE SCRAPPED": "#334155", "TO BE TRANSFERRED": "#0284c7"},
             title="Interactive Material Outlier Mapping (Size = Financial Value)"
         )
         fig_scatter.update_layout(
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
             xaxis=dict(gridcolor="rgba(226, 232, 240, 0.4)"),
-            yaxis=dict(gridcolor="rgba(226, 232, 240, 0.4)")
+            yaxis=dict(gridcolor="rgba(226, 232, 240, 0.4)"),
+            font=dict(family="Inter, sans-serif", size=12)
         )
         st.plotly_chart(fig_scatter, use_container_width=True)
     else:
@@ -296,6 +308,14 @@ if uploaded_materials is not None and uploaded_prices is not None:
     stage4_count = len(Interested_plant_unique) - stage_transferred_count
     stage4_value = Interested_plant_stock_value - transferred_stock_value
 
+    # Rest of plants calculation
+    other_plants_unique_count = stage3_count - len(Interested_plant_unique)
+    other_plants_unique_value = stage3_value - Interested_plant_stock_value
+
+    # Excluded steps calculation
+    non_stock_count = stage1_count - stage2_count
+    zero_stock_count = stage2_count - stage3_count
+
     stages = [
         "Total Removed Materials",
         "Total Stock Materials",
@@ -315,7 +335,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
             text=text_labels,
             hoverinfo="y+text",
             marker=dict(
-                color=["#0f172a", "#1e3a8a", "#2563eb", "#475569", "#0d9488"],
+                color=["#0f172a", "#1e293b", "#334155", "#64748b", "#0284c7"],
                 line=dict(color="#ffffff", width=2)
             ),
             connector=dict(fillcolor="rgba(226, 232, 240, 0.4)", line=dict(color="#cbd5e1", width=1))
@@ -332,36 +352,48 @@ if uploaded_materials is not None and uploaded_prices is not None:
         )
         st.plotly_chart(fig_funnel, use_container_width=True)
     else:
+        # ENHANCED SANKEY DIAGRAM (Includes both material quantity and stock financial value)
         label_nodes = [
-            f"Total Materials ({stage1_count} Mat)",
-            f"PD/V1 Qualified ({stage2_count} Mat)",
-            f"Non-Stock (Excluded) ({stage1_count - stage2_count} Mat)",
-            f"Active Stock ({stage3_count} Mat)",
-            f"Other Plants Stock ({stage3_count - len(Interested_plant_unique)} Mat)",
-            f"{plant} Net Stock ({stage4_count} Mat)",
-            f"To Be Transferred ({stage_transferred_count} Mat)"
+            f"Total Materials<br>({stage1_count} Mat / ${stage1_value:,.0f})",
+            f"PD/V1 Qualified<br>({stage2_count} Mat / ${stage2_value:,.0f})",
+            f"Non-Stock (Excluded)<br>({non_stock_count} Mat)",
+            f"Active Stock (All Plants)<br>({stage3_count} Mat / ${stage3_value:,.0f})",
+            f"Other Plants Stock<br>({other_plants_unique_count} Mat / ${other_plants_unique_value:,.0f})",
+            f"{plant} Net Stock (Scrapped)<br>({stage4_count} Mat / ${stage4_value:,.0f})",
+            f"To Be Transferred ({plant})<br>({stage_transferred_count} Mat / ${transferred_stock_value:,.0f})"
         ]
 
         fig_sankey = go.Figure(data=[go.Sankey(
             node=dict(
-                pad=20,
+                pad=24,
                 thickness=20,
                 line=dict(color="#ffffff", width=1.5),
                 label=label_nodes,
-                color=["#0f172a", "#1e3a8a", "#64748b", "#2563eb", "#94a3b8", "#475569", "#0d9488"]
+                color=["#0f172a", "#1e293b", "#64748b", "#334155", "#94a3b8", "#475569", "#0284c7"]
             ),
             link=dict(
                 source=[0, 0, 1, 1, 3, 3],
                 target=[1, 2, 3, 4, 5, 6],
+                # Quantities represent the raw link weights
                 value=[
                     stage2_count,
-                    max(1, stage1_count - stage2_count),
+                    max(1, non_stock_count),
                     stage3_count,
-                    max(1, stage3_count - len(Interested_plant_unique)),
+                    max(1, other_plants_unique_count),
                     stage4_count,
                     stage_transferred_count
                 ],
-                color="rgba(59, 130, 246, 0.15)"
+                # Custom tooltip text showing both quantity and financial value
+                customdata=[
+                    f"PD/V1 Qualified Flow: {stage2_count} Materials (${stage2_value:,.0f})",
+                    f"Non-Stock Outflow: {non_stock_count} Materials",
+                    f"Active Stock Flow: {stage3_count} Materials (${stage3_value:,.0f})",
+                    f"Other Plants Allocation: {other_plants_unique_count} Materials (${other_plants_unique_value:,.0f})",
+                    f"Local Scrapping Flow: {stage4_count} Materials (${stage4_value:,.0f})",
+                    f"Transfer Flow: {stage_transferred_count} Materials (${transferred_stock_value:,.0f})"
+                ],
+                hovertemplate="%{customdata}<extra></extra>",
+                color="rgba(2, 132, 199, 0.15)"
             )
         )])
         fig_sankey.update_layout(
