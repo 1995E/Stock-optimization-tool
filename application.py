@@ -180,7 +180,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
     
     # Toggle for selecting different layouts including the alternative Sankey style
     layout_choice = st.radio(
-        "Select Pipeline Visual Representation:", 
+        "Select the layout:", 
         ["Standard Funnel Layout", "Modern Horizontal Progress Layout", "Sankey Flow Diagram (Interactive)"], 
         horizontal=True
     )
@@ -205,9 +205,9 @@ if uploaded_materials is not None and uploaded_prices is not None:
 
     stages = [
         "Total Removed Materials",
-        "PD & V1 Unique Materials",
-        "Stock > 0 (All Plants)",
-        f"Interested Plant Net Value ({plant})",
+        "Total Stock Materials",
+        "Total Stock Materials with Quantity > 0",
+        f"Stock Materials in ({plant})",
         f"Materials to be Transferred (from {plant})"
     ]
     counts = [stage1_count, stage2_count, stage3_count, stage4_count, stage_transferred_count]
@@ -294,7 +294,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
     # 6. EXPORT ACTION IN SIDEBAR
     with st.sidebar:
         st.markdown("--- ")
-        st.header("📦 Actions")
+        st.header("📦 Download the Results")
         if not Interested_plant.empty:
             buffer = io.BytesIO()
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
@@ -302,7 +302,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
             buffer.seek(0)
 
             st.download_button(
-                label=f"📥 Download {plant} Materials (Excel)",
+                label=f"📥 {plant} Materials for Scrap (Excel)",
                 data=buffer,
                 file_name=f"{plant}_interested_materials.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
