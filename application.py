@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS to inject an ultra-clean modern corporate layout style
+# Custom CSS to inject an ultra-clean modern corporate layout style and styled dividers
 st.markdown("""
     <style>
         .main {
@@ -38,6 +38,14 @@ st.markdown("""
             font-size: 1.8rem;
             font-weight: 700;
             margin: 0;
+        }
+        /* Premium custom divider style */
+        .custom-divider {
+            margin-top: 2.5rem;
+            margin-bottom: 2.5rem;
+            border: 0;
+            height: 1px;
+            background-image: linear-gradient(to right, rgba(148, 163, 184, 0), rgba(148, 163, 184, 0.4), rgba(148, 163, 184, 0));
         }
     </style>
 """, unsafe_allow_html=True)
@@ -125,7 +133,8 @@ if uploaded_materials is not None and uploaded_prices is not None:
     with kpi4:
         st.markdown(f'<div class="metric-card"><h6>{plant} Stock Value (USD)</h6><h3>${Interested_plant_stock_value:,.2f}</h3></div>', unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Separator after KPIs
+    st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
 
     # 4. INTERACTIVE CHARTS (HEATMAP & PIE)
     st.markdown("### Distribution and Visual Categorization Insights")
@@ -135,7 +144,6 @@ if uploaded_materials is not None and uploaded_prices is not None:
 
         with col_left:
             cross_tab = pd.crosstab(Interested_plant['FASD'], Interested_plant['Category'])
-            # IMPROVED COLOR: Tealrose offers exceptionally clear, modern divergence and aesthetics
             fig_heat = px.imshow(
                 cross_tab,
                 text_auto=True,
@@ -155,7 +163,6 @@ if uploaded_materials is not None and uploaded_prices is not None:
             category_counts = Interested_plant['Category'].value_counts().reset_index()
             category_counts.columns = ['Category', 'Count']
 
-            # IMPROVED COLORS: Coral Red and Emerald Green custom corporate theme
             color_map = {"TO BE SCRAPPED": "#ff4d6d", "TO BE TRANSFERRED": "#06d6a0"}
             fig_pie = px.pie(
                 category_counts,
@@ -177,12 +184,14 @@ if uploaded_materials is not None and uploaded_prices is not None:
     else:
         st.warning(f"No stock records found for plant: {plant}")
 
+    # Separator before Advanced Insights
+    st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
+
     # NEW INTERACTIVE ANALYSIS SECTION
     st.markdown("### 🔍 Advanced Stock Insights (New Plots)")
     col_new1, col_new2 = st.columns(2)
 
     with col_new1:
-        # Box / Strip Plot showing Stock Value and FASD Status Distribution
         st.markdown("**FASD Status vs. Stock Value Distribution**")
         if not Interested_plant.empty:
             Interested_plant['Total Value'] = Interested_plant['Stock qty'] * Interested_plant['Unit price']
@@ -207,7 +216,6 @@ if uploaded_materials is not None and uploaded_prices is not None:
             st.info("No stock data available to display Box Distribution.")
 
     with col_new2:
-        # Discipline Breakdown by Financial Category
         st.markdown("**Discipline Breakdown by Financial Category**")
         if not Interested_plant.empty:
             discipline_group = Interested_plant.groupby(['Material discipline', 'Category'])['Total Value'].sum().reset_index()
@@ -228,6 +236,9 @@ if uploaded_materials is not None and uploaded_prices is not None:
             st.plotly_chart(fig_bar_group, use_container_width=True)
         else:
             st.info("No stock data available for Discipline breakdown.")
+
+    # Separator before Operational Scatter
+    st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
 
     # ADDED ADDITIONAL STOCK METRICS INTERACTIVE ANALYSIS
     st.markdown("### 📈 Advanced Operational Scatter")
@@ -251,6 +262,9 @@ if uploaded_materials is not None and uploaded_prices is not None:
         st.plotly_chart(fig_scatter, use_container_width=True)
     else:
         st.info("No stock data available for Scatter Plot.")
+
+    # Separator before Flow Funnel Analysis
+    st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
 
     # 5. MULTI-VIEW MATERIALS ANALYSIS
     st.markdown("### Material Filtering & Stock Value Distribution Analysis")
