@@ -175,7 +175,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
     else:
         st.warning(f"No stock records found for plant: {plant}")
 
-    # 5. MULTI-VIEW PIPELINE ANALYSIS (WITH REVOLUTIONARY SANKEY REPRESENTATION)
+    # 5. MULTI-VIEW MATERIALS ANALYSIS (WITH REVOLUTIONARY SANKEY REPRESENTATION)
     st.markdown("### Material Filtering & Stock Value Funnel Analysis")
     
     # Toggle for selecting different layouts including the alternative Sankey style
@@ -261,12 +261,36 @@ if uploaded_materials is not None and uploaded_prices is not None:
         st.plotly_chart(fig_bar, use_container_width=True)
     else:
         # Highly modern interactive Sankey Flow design
+        label_nodes = [
+        f"Total Removed<br>({stage1_count} Mat / ${stage1_value:,.0f})",
+        f"PD & V1 Unique<br>({stage2_count} Mat / ${stage2_value:,.0f})",
+        f"Non-Stock (Excluded)<br>({stage1_count - stage2_count} Mat)",
+        f"Stock > 0 All Plants<br>({stage3_count} Mat / ${stage3_value:,.0f})",
+        f"Zero Stock (Excluded)<br>({stage2_count - stage3_count} Mat)",
+        f"{plant} Net Stock (Scrapped)<br>({stage4_count} Mat / ${stage4_value:,.0f})",
+        f"To Be Transferred<br>({stage_transferred_count} Mat / ${transferred_stock_value:,.0f})",
+        f"Other Plants Stock<br>({stage3_count - len(Interested_plant_unique)} Mat)"
+        ]
+        # Source and target mappings with respective values (using material count for the width of flows)
+        flow_values = [
+        stage2_count,
+        max(1, stage1_count - stage2_count),
+        stage3_count,
+        max(1, stage2_count - stage3_count),
+        stage4_count,
+        stage_transferred_count,
+        max(1, stage3_count - len(Interested_plant_unique))
+        ]
+        
+        
+        
+        
         fig_sankey = go.Figure(data=[go.Sankey(
             node = dict(
               pad = 20,
               thickness = 25,
               line = dict(color = "gray", width = 0.5),
-              label = ["Initial Pool", "PD/V1 Classified", "Excluded Category", "Active Stock (Other Plants)", f"{plant} Inventory", "To Be Scrapped", "To Be Transferred"],
+              label=label_nodes
               color = ["#1A365D", "#2B6CB0", "#E53E3E", "#4299E1", "#319795", "#E53E3E", "#3182CE"]
             ),
             link = dict(
