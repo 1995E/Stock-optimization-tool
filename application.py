@@ -11,16 +11,33 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS to inject a clean modern interface style
+# Custom CSS to inject an ultra-clean modern corporate layout style
 st.markdown("""
     <style>
-        .main { background-color: #f8f9fa; }
-        .metric-card { 
-            background-color: #ffffff; 
-            padding: 20px; 
-            border-radius: 10px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-            border-left: 5px solid #1e3d59; 
+        .main { 
+            background-color: #f4f6f9; 
+        }
+        .metric-card {
+            background-color: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-top: 4px solid #1a365d;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .metric-card h6 {
+            color: #718096;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+        .metric-card h3 {
+            color: #1a365d;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -58,8 +75,8 @@ if uploaded_materials is not None and uploaded_prices is not None:
     with st.sidebar:
         available_plants = sorted(df['Plant'].dropna().unique())
         plant = st.selectbox(
-            "Select Plant of Interest:", 
-            available_plants, 
+            "Select Plant of Interest:",
+            available_plants,
             index=0 if 'PAZFLOR' not in available_plants else available_plants.index('PAZFLOR')
         )
 
@@ -98,7 +115,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
     # 3. HIGHLY VISUAL KPI METRICS SECTION
     st.markdown("### Key Performance Indicators")
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-    
+
     with kpi1:
         st.markdown(f'<div class="metric-card"><h6>Total Removed Materials</h6><h3>{Total_removed_materials:,}</h3></div>', unsafe_allow_html=True)
     with kpi2:
@@ -115,15 +132,15 @@ if uploaded_materials is not None and uploaded_prices is not None:
 
     if not Interested_plant.empty:
         col_left, col_right = st.columns(2)
-        
+
         with col_left:
             cross_tab = pd.crosstab(Interested_plant['FASD'], Interested_plant['Category'])
             # Modern heatmap using Plotly express
             fig_heat = px.imshow(
-                cross_tab, 
-                text_auto=True, 
+                cross_tab,
+                text_auto=True,
                 aspect="auto",
-                color_continuous_scale="Viridis",
+                color_continuous_scale="Blues",
                 labels=dict(x="Category", y="FASD Status", color="Material Count"),
                 title="Category Distribution per FASD Status"
             )
@@ -137,19 +154,19 @@ if uploaded_materials is not None and uploaded_prices is not None:
         with col_right:
             category_counts = Interested_plant['Category'].value_counts().reset_index()
             category_counts.columns = ['Category', 'Count']
-            
+
             # Interactive and Clean Donut Chart
             fig_pie = px.pie(
-                category_counts, 
-                values='Count', 
-                names='Category', 
+                category_counts,
+                values='Count',
+                names='Category',
                 hole=0.45,
-                color_discrete_sequence=["#E74C3C", "#2ECC71"],
+                color_discrete_sequence=["#3182ce", "#319795"],
                 title="General Classification Distribution"
             )
             fig_pie.update_traces(textinfo='percent+label', pull=[0.05] * len(category_counts))
             fig_pie.update_layout(
-                showlegend=True, 
+                showlegend=True,
                 legend=dict(orientation="h", yanchor="bottom", y=-0.1, xanchor="center", x=0.5),
                 margin=dict(l=40, r=40, t=60, b=40),
                 paper_bgcolor="rgba(0,0,0,0)"
@@ -158,8 +175,15 @@ if uploaded_materials is not None and uploaded_prices is not None:
     else:
         st.warning(f"No stock records found for plant: {plant}")
 
-    # 5. MODERN FUNNEL ANALYSIS
+    # 5. MULTI-VIEW PIPELINE ANALYSIS (WITH REVOLUTIONARY SANKEY REPRESENTATION)
     st.markdown("### Material Filtering & Stock Value Funnel Analysis")
+    
+    # Toggle for selecting different layouts including the alternative Sankey style
+    layout_choice = st.radio(
+        "Select Pipeline Visual Representation:", 
+        ["Standard Funnel Layout", "Modern Horizontal Progress Layout", "Sankey Flow Diagram (Interactive)"], 
+        horizontal=True
+    )
 
     stage1_count = df['Material n°'].nunique()
     stage1_value = (df[df['Stock qty'] > 0].eval('`Stock qty` * `Unit price`')).sum()
@@ -190,25 +214,82 @@ if uploaded_materials is not None and uploaded_prices is not None:
     values = [stage1_value, stage2_value, stage3_value, stage4_value, transferred_stock_value]
     text_labels = [f"{c} Materials<br>${v:,.2f}" for c, v in zip(counts, values)]
 
-    fig_funnel = go.Figure(go.Funnel(
-        y=stages,
-        x=counts,
-        textinfo="text",
-        text=text_labels,
-        hoverinfo="y+text",
-        marker=dict(color=["#2C3E50", "#34495E", "#16A085", "#2980B9", "#27AE60"]),
-        connector=dict(line=dict(color="#E2E8F0", width=1.5))
-    ))
-    fig_funnel.update_layout(
-        title_text="Filtering Funnel Flow",
-        title_x=0.5,
-        funnelmode="stack",
-        showlegend=False,
-        height=450,
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)"
-    )
-    st.plotly_chart(fig_funnel, use_container_width=True)
+    if layout_choice == "Standard Funnel Layout":
+        fig_funnel = go.Figure(go.Funnel(
+            y=stages,
+            x=counts,
+            textinfo="text",
+            text=text_labels,
+            hoverinfo="y+text",
+            marker=dict(color=["#1A365D", "#2B6CB0", "#3182CE", "#4299E1", "#63B3ED"]),
+            connector=dict(line=dict(color="#CBD5E0", width=1.5))
+        ))
+        fig_funnel.update_layout(
+            title_text="Standard Funnel Flow",
+            title_x=0.5,
+            funnelmode="stack",
+            showlegend=False,
+            height=450,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)"
+        )
+        st.plotly_chart(fig_funnel, use_container_width=True)
+    elif layout_choice == "Modern Horizontal Progress Layout":
+        # Alternative Modern Horizontal Progression Bar chart style
+        fig_bar = go.Figure()
+        fig_bar.add_trace(go.Bar(
+            y=stages[::-1],
+            x=counts[::-1],
+            orientation='h',
+            text=[text_labels[i].replace("<br>", " - ") for i in range(len(text_labels))][::-1],
+            textposition='auto',
+            marker=dict(
+                color=["#63B3ED", "#4299E1", "#3182CE", "#2B6CB0", "#1A365D"],
+                line=dict(color='rgba(255, 255, 255, 1)', width=1)
+            )
+        ))
+        fig_bar.update_layout(
+            title_text="Progressive Pipeline Distribution",
+            title_x=0.5,
+            xaxis_title="Material Volume / Item Count",
+            yaxis_title="Stages",
+            height=450,
+            margin=dict(l=150, r=40, t=60, b=40),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)"
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+    else:
+        # Highly modern interactive Sankey Flow design
+        fig_sankey = go.Figure(data=[go.Sankey(
+            node = dict(
+              pad = 20,
+              thickness = 25,
+              line = dict(color = "gray", width = 0.5),
+              label = ["Initial Pool", "PD/V1 Classified", "Excluded Category", "Active Stock (Other Plants)", f"{plant} Inventory", "To Be Scrapped", "To Be Transferred"],
+              color = ["#1A365D", "#2B6CB0", "#E53E3E", "#4299E1", "#319795", "#E53E3E", "#3182CE"]
+            ),
+            link = dict(
+              source = [0, 0, 1, 1, 4, 4], 
+              target = [1, 2, 3, 4, 5, 6],
+              value = [
+                  stage2_count,
+                  max(1, stage1_count - stage2_count),
+                  max(1, stage2_count - stage3_count),
+                  stage3_count,
+                  stage4_count,
+                  stage_transferred_count
+              ]
+            )
+        )])
+        fig_sankey.update_layout(
+            title_text="Sankey Inventory Lifecycle & Transition Flow",
+            title_x=0.5,
+            height=480,
+            font_size=12,
+            paper_bgcolor="rgba(0,0,0,0)"
+        )
+        st.plotly_chart(fig_sankey, use_container_width=True)
 
     # 6. EXPORT ACTION IN SIDEBAR
     with st.sidebar:
