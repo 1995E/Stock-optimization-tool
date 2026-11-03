@@ -135,7 +135,6 @@ if uploaded_materials is not None and uploaded_prices is not None:
 
         with col_left:
             cross_tab = pd.crosstab(Interested_plant['FASD'], Interested_plant['Category'])
-            # Modern heatmap using Plotly express
             fig_heat = px.imshow(
                 cross_tab,
                 text_auto=True,
@@ -155,7 +154,6 @@ if uploaded_materials is not None and uploaded_prices is not None:
             category_counts = Interested_plant['Category'].value_counts().reset_index()
             category_counts.columns = ['Category', 'Count']
 
-            # Interactive and Clean Donut Chart
             fig_pie = px.pie(
                 category_counts,
                 values='Count',
@@ -175,7 +173,58 @@ if uploaded_materials is not None and uploaded_prices is not None:
     else:
         st.warning(f"No stock records found for plant: {plant}")
 
-    # 5. MULTI-VIEW MATERIALS ANALYSIS (WITH MODERN REVOLUTIONARY VISUALIZATIONS)
+    # NEW INTERACTIVE ANALYSIS SECTION
+    st.markdown("### 🔍 Advanced Stock Insights (New Plots)")
+    col_new1, col_new2 = st.columns(2)
+
+    with col_new1:
+        # 1. Hierarchical Stock Value Treemap by Discipline & Material
+        st.markdown("**Material Discipline vs. Value Distribution (Treemap)**")
+        if not Interested_plant.empty:
+            Interested_plant['Total Value'] = Interested_plant['Stock qty'] * Interested_plant['Unit price']
+            # Clean up missing descriptions/disciplines
+            treemap_df = Interested_plant.copy()
+            treemap_df['Material discipline'] = treemap_df['Material discipline'].fillna('Undefined')
+            treemap_df['Material description'] = treemap_df['Material description'].fillna('No Description')
+            
+            fig_treemap = px.treemap(
+                treemap_df,
+                path=['Material discipline', 'Material description'],
+                values='Total Value',
+                color='Total Value',
+                color_continuous_scale='Blues',
+                title=f"Inventory Value Breakdown by Discipline in {plant}"
+            )
+            fig_treemap.update_layout(margin=dict(t=40, l=10, r=10, b=10))
+            st.plotly_chart(fig_treemap, use_container_width=True)
+        else:
+            st.info("No stock data available to display Treemap.")
+
+    with col_new2:
+        # 2. Box / Strip Plot showing Stock Value and FASD Status Distribution
+        st.markdown("**FASD Status vs. Stock Value Distribution**")
+        if not Interested_plant.empty:
+            fig_box = px.box(
+                Interested_plant,
+                x='FASD',
+                y='Total Value',
+                color='FASD',
+                points="all",
+                color_discrete_sequence=px.colors.qualitative.Safe,
+                title="Material Value Ranges across FASD Categories"
+            )
+            fig_box.update_layout(
+                plot_bgcolor="rgba(0,0,0,0)",
+                paper_bgcolor="rgba(0,0,0,0)",
+                yaxis_title="Value per Stock Item (USD)",
+                xaxis_title="FASD Movement Code",
+                margin=dict(t=40, l=40, r=40, b=40)
+            )
+            st.plotly_chart(fig_box, use_container_width=True)
+        else:
+            st.info("No stock data available to display Box Distribution.")
+
+    # 5. MULTI-VIEW MATERIALS ANALYSIS
     st.markdown("### Material Filtering & Stock Value Distribution Analysis")
 
     layout_choice = st.radio(
@@ -238,7 +287,6 @@ if uploaded_materials is not None and uploaded_prices is not None:
         )
         st.plotly_chart(fig_funnel, use_container_width=True)
     else:
-        # Ultra-modern and interactive transparent Sankey Flow with dynamic nodes and labels
         label_nodes = [
             f"Total Materials ({stage1_count} Mat)",
             f"PD/V1 Qualified ({stage2_count} Mat)",
@@ -248,7 +296,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
             f"{plant} Net Stock ({stage4_count} Mat)",
             f"To Be Transferred ({stage_transferred_count} Mat)"
         ]
-        
+
         fig_sankey = go.Figure(data=[go.Sankey(
             node=dict(
                 pad=20,
@@ -286,8 +334,10 @@ if uploaded_materials is not None and uploaded_prices is not None:
         st.header("📦 Download the Results")
         if not Interested_plant.empty:
             buffer = io.BytesIO()
+            # Avoid saving extra temp interactive column to the export file
+            export_df = Interested_plant.drop(columns=['Total Value'], errors='ignore')
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                Interested_plant.to_excel(writer, index=False, sheet_name=f'{plant}_Materials')
+                export_df.to_excel(writer, index=False, sheet_name=f'{plant}_Materials')
             buffer.seek(0)
 
             st.download_button(
