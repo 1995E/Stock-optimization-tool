@@ -14,27 +14,27 @@ st.set_page_config(
 # Custom CSS to inject an ultra-clean modern corporate layout style
 st.markdown("""
     <style>
-        .main { 
-            background-color: #f4f6f9; 
+        .main {
+            background-color: #f8fafc;
         }
         .metric-card {
             background-color: #ffffff;
             padding: 24px;
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border-top: 4px solid #1a365d;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border-top: 4px solid #3b82f6;
             text-align: center;
             margin-bottom: 15px;
         }
         .metric-card h6 {
-            color: #718096;
+            color: #64748b;
             font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-bottom: 8px;
         }
         .metric-card h3 {
-            color: #1a365d;
+            color: #1e293b;
             font-size: 1.8rem;
             font-weight: 700;
             margin: 0;
@@ -161,7 +161,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 values='Count',
                 names='Category',
                 hole=0.45,
-                color_discrete_sequence=["#3182ce", "#319795"],
+                color_discrete_sequence=["#3b82f6", "#10b981"],
                 title="General Classification Distribution"
             )
             fig_pie.update_traces(textinfo='percent+label', pull=[0.05] * len(category_counts))
@@ -175,13 +175,12 @@ if uploaded_materials is not None and uploaded_prices is not None:
     else:
         st.warning(f"No stock records found for plant: {plant}")
 
-    # 5. MULTI-VIEW MATERIALS ANALYSIS (WITH REVOLUTIONARY SANKEY REPRESENTATION)
-    st.markdown("### Material Filtering & Stock Value Funnel Analysis")
-    
-    # Toggle for selecting different layouts including the alternative Sankey style
+    # 5. MULTI-VIEW MATERIALS ANALYSIS (WITH MODERN REVOLUTIONARY VISUALIZATIONS)
+    st.markdown("### Material Filtering & Stock Value Distribution Analysis")
+
     layout_choice = st.radio(
-        "Select the layout:", 
-        ["Standard Funnel Layout", "Modern Horizontal Progress Layout", "Sankey Flow Diagram (Interactive)"], 
+        "Select visualization layout:",
+        ["Modern 3D Funnel Flow", "Sankey Flow Diagram (Highly Interactive)"],
         horizontal=True
     )
 
@@ -206,87 +205,77 @@ if uploaded_materials is not None and uploaded_prices is not None:
     stages = [
         "Total Removed Materials",
         "Total Stock Materials",
-        "Total Stock Materials with Quantity > 0",
-        f"Stock Materials in ({plant})",
-        f"Materials to be Transferred (from {plant})"
+        "Stock Qty > 0 (All Plants)",
+        f"{plant} Stock (Scrapped)",
+        f"To Be Transferred ({plant})"
     ]
     counts = [stage1_count, stage2_count, stage3_count, stage4_count, stage_transferred_count]
     values = [stage1_value, stage2_value, stage3_value, stage4_value, transferred_stock_value]
-    text_labels = [f"{c} Materials<br>${v:,.2f}" for c, v in zip(counts, values)]
+    text_labels = [f"{c} Materials<br>${v:,.0f}" for c, v in zip(counts, values)]
 
-    if layout_choice == "Standard Funnel Layout":
+    if layout_choice == "Modern 3D Funnel Flow":
         fig_funnel = go.Figure(go.Funnel(
             y=stages,
             x=counts,
             textinfo="text",
             text=text_labels,
             hoverinfo="y+text",
-            marker=dict(color=["#1A365D", "#2B6CB0", "#3182CE", "#4299E1", "#63B3ED"]),
-            connector=dict(line=dict(color="#CBD5E0", width=1.5))
+            marker=dict(
+                color=["#1e3a8a", "#2563eb", "#3b82f6", "#ef4444", "#10b981"],
+                line=dict(color="#ffffff", width=2)
+            ),
+            connector=dict(fillcolor="rgba(226, 232, 240, 0.4)", line=dict(color="#cbd5e1", width=1))
         ))
         fig_funnel.update_layout(
-            title_text="Standard Funnel Flow",
+            title_text="Sleek Progression Funnel Analysis",
             title_x=0.5,
             funnelmode="stack",
             showlegend=False,
-            height=450,
+            height=480,
             paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(family="Inter, sans-serif", size=12)
         )
         st.plotly_chart(fig_funnel, use_container_width=True)
-    elif layout_choice == "Modern Horizontal Progress Layout":
-        # Alternative Modern Horizontal Progression Bar chart style
-        fig_bar = go.Figure()
-        fig_bar.add_trace(go.Bar(
-            y=stages[::-1],
-            x=counts[::-1],
-            orientation='h',
-            text=[text_labels[i].replace("<br>", " - ") for i in range(len(text_labels))][::-1],
-            textposition='auto',
-            marker=dict(
-                color=["#63B3ED", "#4299E1", "#3182CE", "#2B6CB0", "#1A365D"],
-                line=dict(color='rgba(255, 255, 255, 1)', width=1)
-            )
-        ))
-        fig_bar.update_layout(
-            title_text="Progressive Pipeline Distribution",
-            title_x=0.5,
-            xaxis_title="Material Volume / Item Count",
-            yaxis_title="Stages",
-            height=450,
-            margin=dict(l=150, r=40, t=60, b=40),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
     else:
-        # Highly modern interactive Sankey Flow design
+        # Ultra-modern and interactive transparent Sankey Flow with dynamic nodes and labels
+        label_nodes = [
+            f"Total Materials ({stage1_count} Mat)",
+            f"PD/V1 Qualified ({stage2_count} Mat)",
+            f"Non-Stock (Excluded) ({stage1_count - stage2_count} Mat)",
+            f"Active Stock ({stage3_count} Mat)",
+            f"Other Plants Stock ({stage3_count - len(Interested_plant_unique)} Mat)",
+            f"{plant} Net Stock ({stage4_count} Mat)",
+            f"To Be Transferred ({stage_transferred_count} Mat)"
+        ]
+        
         fig_sankey = go.Figure(data=[go.Sankey(
-            node = dict(
-              pad = 20,
-              thickness = 25,
-              line = dict(color = "gray", width = 0.5),
-              label = ["Initial Pool", "PD/V1 Classified", "Excluded Category", "Active Stock (Other Plants)", f"{plant} Inventory", "To Be Scrapped", "To Be Transferred"],
-              color = ["#1A365D", "#2B6CB0", "#E53E3E", "#4299E1", "#319795", "#E53E3E", "#3182CE"]
+            node=dict(
+                pad=20,
+                thickness=20,
+                line=dict(color="#ffffff", width=1.5),
+                label=label_nodes,
+                color=["#1e3a8a", "#2563eb", "#94a3b8", "#3b82f6", "#64748b", "#ef4444", "#10b981"]
             ),
-            link = dict(
-              source = [0, 0, 1, 1, 4, 4], 
-              target = [1, 2, 3, 4, 5, 6],
-              value = [
-                  stage2_count,
-                  max(1, stage1_count - stage2_count),
-                  max(1, stage2_count - stage3_count),
-                  stage3_count,
-                  stage4_count,
-                  stage_transferred_count
-              ]
+            link=dict(
+                source=[0, 0, 1, 1, 3, 3],
+                target=[1, 2, 3, 4, 5, 6],
+                value=[
+                    stage2_count,
+                    max(1, stage1_count - stage2_count),
+                    stage3_count,
+                    max(1, stage3_count - len(Interested_plant_unique)),
+                    stage4_count,
+                    stage_transferred_count
+                ],
+                color="rgba(59, 130, 246, 0.2)"
             )
         )])
         fig_sankey.update_layout(
-            title_text="Sankey Inventory Lifecycle & Transition Flow",
+            title_text="Dynamic Stock Lifecycle Flow & Transitions",
             title_x=0.5,
-            height=480,
-            font_size=12,
+            height=500,
+            font=dict(family="Inter, sans-serif", size=12),
             paper_bgcolor="rgba(0,0,0,0)"
         )
         st.plotly_chart(fig_sankey, use_container_width=True)
