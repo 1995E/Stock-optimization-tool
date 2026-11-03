@@ -22,19 +22,19 @@ st.markdown("""
             padding: 24px;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            border-top: 4px solid #2563eb;
+            border-top: 4px solid #1e3a8a;
             text-align: center;
             margin-bottom: 15px;
         }
         .metric-card h6 {
-            color: #64748b;
+            color: #475569;
             font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-bottom: 8px;
         }
         .metric-card h3 {
-            color: #1e293b;
+            color: #0f172a;
             font-size: 1.8rem;
             font-weight: 700;
             margin: 0;
@@ -144,11 +144,12 @@ if uploaded_materials is not None and uploaded_prices is not None:
 
         with col_left:
             cross_tab = pd.crosstab(Interested_plant['FASD'], Interested_plant['Category'])
+            # IMPROVED COLOR: 'dense' is a beautiful, professional navy/purple heatmap color scheme
             fig_heat = px.imshow(
                 cross_tab,
                 text_auto=True,
                 aspect="auto",
-                color_continuous_scale="Tealrose",
+                color_continuous_scale="dense",
                 labels=dict(x="Category", y="FASD Status", color="Material Quantity"),
                 title="Distribution per FASD Status"
             )
@@ -163,7 +164,8 @@ if uploaded_materials is not None and uploaded_prices is not None:
             category_counts = Interested_plant['Category'].value_counts().reset_index()
             category_counts.columns = ['Category', 'Count']
 
-            color_map = {"TO BE SCRAPPED": "#ff4d6d", "TO BE TRANSFERRED": "#06d6a0"}
+            # IMPROVED COLORS: Steel/Slate Gray for Scrapped, Sophisticated Teal/Emerald for Transferred
+            color_map = {"TO BE SCRAPPED": "#475569", "TO BE TRANSFERRED": "#0d9488"}
             fig_pie = px.pie(
                 category_counts,
                 values='Count',
@@ -173,7 +175,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 color_discrete_map=color_map,
                 title="General Classification Distribution"
             )
-            fig_pie.update_traces(textinfo='percent+label', pull=[0.05] * len(category_counts))
+            fig_pie.update_traces(textinfo='percent+label', pull=[0.02] * len(category_counts))
             fig_pie.update_layout(
                 showlegend=True,
                 legend=dict(orientation="h", yanchor="bottom", y=-0.1, xanchor="center", x=0.5),
@@ -195,13 +197,14 @@ if uploaded_materials is not None and uploaded_prices is not None:
         st.markdown("**FASD Status vs. Stock Value Distribution**")
         if not Interested_plant.empty:
             Interested_plant['Total Value'] = Interested_plant['Stock qty'] * Interested_plant['Unit price']
+            # Clean, premium steel blue palette
             fig_box = px.box(
                 Interested_plant,
                 x='FASD',
                 y='Total Value',
                 color='FASD',
                 points="all",
-                color_discrete_sequence=px.colors.qualitative.Safe,
+                color_discrete_sequence=px.colors.sequential.Blues_r,
                 title="Material Value Ranges across FASD Categories"
             )
             fig_box.update_layout(
@@ -225,7 +228,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 y="Total Value",
                 color="Category",
                 barmode="group",
-                color_discrete_map={"TO BE SCRAPPED": "#ff4d6d", "TO BE TRANSFERRED": "#06d6a0"},
+                color_discrete_map={"TO BE SCRAPPED": "#475569", "TO BE TRANSFERRED": "#0d9488"},
                 title="Total Portfolio Financial Value by Discipline"
             )
             fig_bar_group.update_layout(
@@ -250,7 +253,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
             color="Category",
             size="Total Value",
             hover_data=["Material n°", "Material description"],
-            color_discrete_map={"TO BE SCRAPPED": "#ff4d6d", "TO BE TRANSFERRED": "#06d6a0"},
+            color_discrete_map={"TO BE SCRAPPED": "#475569", "TO BE TRANSFERRED": "#0d9488"},
             title="Interactive Material Outlier Mapping (Size = Financial Value)"
         )
         fig_scatter.update_layout(
@@ -312,7 +315,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
             text=text_labels,
             hoverinfo="y+text",
             marker=dict(
-                color=["#1e3a8a", "#2563eb", "#3b82f6", "#ff4d6d", "#06d6a0"],
+                color=["#0f172a", "#1e3a8a", "#2563eb", "#475569", "#0d9488"],
                 line=dict(color="#ffffff", width=2)
             ),
             connector=dict(fillcolor="rgba(226, 232, 240, 0.4)", line=dict(color="#cbd5e1", width=1))
@@ -345,7 +348,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 thickness=20,
                 line=dict(color="#ffffff", width=1.5),
                 label=label_nodes,
-                color=["#1e3a8a", "#2563eb", "#94a3b8", "#3b82f6", "#64748b", "#ff4d6d", "#06d6a0"]
+                color=["#0f172a", "#1e3a8a", "#64748b", "#2563eb", "#94a3b8", "#475569", "#0d9488"]
             ),
             link=dict(
                 source=[0, 0, 1, 1, 3, 3],
@@ -358,7 +361,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                     stage4_count,
                     stage_transferred_count
                 ],
-                color="rgba(59, 130, 246, 0.2)"
+                color="rgba(59, 130, 246, 0.15)"
             )
         )])
         fig_sankey.update_layout(
