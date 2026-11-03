@@ -190,6 +190,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 legend=dict(orientation="h", yanchor="bottom", y=-0.1, xanchor="center", x=0.5),
                 margin=dict(l=40, r=40, t=60, b=40),
                 paper_bgcolor="rgba(0,0,0,0)",
+                title_x = 0.5
                 font=dict(family="Inter, sans-serif", size=12)
             )
             st.plotly_chart(fig_pie, use_container_width=True)
