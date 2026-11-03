@@ -42,8 +42,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("📦 Material Overview & Funnel Analysis")
-st.markdown("Retrieve structured insights, classify inventory status, and assess material transitions dynamically.")
+st.title("📦 Material Overview & Stock Analysis")
+st.markdown("Retrieve structured insights, classify inventory status, and assess material for scrapping or to be transferred.")
 
 # 1. FILE UPLOADERS IN SIDEBAR
 with st.sidebar:
@@ -57,7 +57,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
     removed_materials_df = pd.read_excel(uploaded_materials)
     unit_price_df = pd.read_excel(uploaded_prices)
 
-    # 2. PROCESSING PIPELINE
+    # 2. PROCESSING INFORMATION
     filtered_unit_prices = unit_price_df[unit_price_df['Valuation Type'] == 'BLOC-17']
     material_prices = filtered_unit_prices.groupby('Material n°')['Item Price'].mean()
     removed_materials_df['Unit price'] = removed_materials_df['Material n°'].map(material_prices)
@@ -141,8 +141,8 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 text_auto=True,
                 aspect="auto",
                 color_continuous_scale="Blues",
-                labels=dict(x="Category", y="FASD Status", color="Material Count"),
-                title="Category Distribution per FASD Status"
+                labels=dict(x="Category", y="FASD Status", color="Material Quantity"),
+                title="Distribution per FASD Status"
             )
             fig_heat.update_layout(
                 margin=dict(l=40, r=40, t=60, b=40),
