@@ -323,7 +323,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
         "Total Stock Materials",
         "Material with Stock Qty > 0 (All Plants)",
         f"Potential {plant} Dead Stock Material",
-        f"To Be Transferred ({plant})"
+        f"Stock Materials to be Transferred from ({plant})"
     ]
     counts = [stage1_count, stage2_count, stage3_count, stage4_count, stage_transferred_count]
     values = [stage1_value, stage2_value, stage3_value, stage4_value, transferred_stock_value]
