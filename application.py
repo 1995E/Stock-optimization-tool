@@ -22,7 +22,7 @@ st.markdown("""
             padding: 24px;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            border-top: 4px solid #3b82f6;
+            border-top: 4px solid #2563eb;
             text-align: center;
             margin-bottom: 15px;
         }
@@ -50,7 +50,7 @@ with st.sidebar:
     st.header("📂 Data Source Configuration")
     uploaded_materials = st.file_uploader("Material Overview per Plant (Excel)", type=["xlsx"])
     uploaded_prices = st.file_uploader("Material Overview per Price (Excel)", type=["xlsx"])
-    st.markdown("--- ")
+    st.markdown("---")
 
 if uploaded_materials is not None and uploaded_prices is not None:
     # Read DataFrames
@@ -135,11 +135,12 @@ if uploaded_materials is not None and uploaded_prices is not None:
 
         with col_left:
             cross_tab = pd.crosstab(Interested_plant['FASD'], Interested_plant['Category'])
+            # IMPROVED COLOR: Tealrose offers exceptionally clear, modern divergence and aesthetics
             fig_heat = px.imshow(
                 cross_tab,
                 text_auto=True,
                 aspect="auto",
-                color_continuous_scale="Blues",
+                color_continuous_scale="Tealrose",
                 labels=dict(x="Category", y="FASD Status", color="Material Quantity"),
                 title="Distribution per FASD Status"
             )
@@ -154,12 +155,15 @@ if uploaded_materials is not None and uploaded_prices is not None:
             category_counts = Interested_plant['Category'].value_counts().reset_index()
             category_counts.columns = ['Category', 'Count']
 
+            # IMPROVED COLORS: Coral Red and Emerald Green custom corporate theme
+            color_map = {"TO BE SCRAPPED": "#ff4d6d", "TO BE TRANSFERRED": "#06d6a0"}
             fig_pie = px.pie(
                 category_counts,
                 values='Count',
                 names='Category',
                 hole=0.45,
-                color_discrete_sequence=["#3b82f6", "#10b981"],
+                color='Category',
+                color_discrete_map=color_map,
                 title="General Classification Distribution"
             )
             fig_pie.update_traces(textinfo='percent+label', pull=[0.05] * len(category_counts))
@@ -177,11 +181,11 @@ if uploaded_materials is not None and uploaded_prices is not None:
     st.markdown("### 🔍 Advanced Stock Insights (New Plots)")
     col_new1, col_new2 = st.columns(2)
 
-    
-    with col_new2:
-        # 2. Box / Strip Plot showing Stock Value and FASD Status Distribution
+    with col_new1:
+        # Box / Strip Plot showing Stock Value and FASD Status Distribution
         st.markdown("**FASD Status vs. Stock Value Distribution**")
         if not Interested_plant.empty:
+            Interested_plant['Total Value'] = Interested_plant['Stock qty'] * Interested_plant['Unit price']
             fig_box = px.box(
                 Interested_plant,
                 x='FASD',
@@ -201,6 +205,52 @@ if uploaded_materials is not None and uploaded_prices is not None:
             st.plotly_chart(fig_box, use_container_width=True)
         else:
             st.info("No stock data available to display Box Distribution.")
+
+    with col_new2:
+        # Discipline Breakdown by Financial Category
+        st.markdown("**Discipline Breakdown by Financial Category**")
+        if not Interested_plant.empty:
+            discipline_group = Interested_plant.groupby(['Material discipline', 'Category'])['Total Value'].sum().reset_index()
+            fig_bar_group = px.bar(
+                discipline_group,
+                x="Material discipline",
+                y="Total Value",
+                color="Category",
+                barmode="group",
+                color_discrete_map={"TO BE SCRAPPED": "#ff4d6d", "TO BE TRANSFERRED": "#06d6a0"},
+                title="Total Portfolio Financial Value by Discipline"
+            )
+            fig_bar_group.update_layout(
+                plot_bgcolor="rgba(0,0,0,0)",
+                paper_bgcolor="rgba(0,0,0,0)",
+                yaxis_title="Total Financial Value (USD)"
+            )
+            st.plotly_chart(fig_bar_group, use_container_width=True)
+        else:
+            st.info("No stock data available for Discipline breakdown.")
+
+    # ADDED ADDITIONAL STOCK METRICS INTERACTIVE ANALYSIS
+    st.markdown("### 📈 Advanced Operational Scatter")
+    if not Interested_plant.empty:
+        fig_scatter = px.scatter(
+            Interested_plant,
+            x="Stock qty",
+            y="Unit price",
+            color="Category",
+            size="Total Value",
+            hover_data=["Material n°", "Material description"],
+            color_discrete_map={"TO BE SCRAPPED": "#ff4d6d", "TO BE TRANSFERRED": "#06d6a0"},
+            title="Interactive Material Outlier Mapping (Size = Financial Value)"
+        )
+        fig_scatter.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            xaxis=dict(gridcolor="rgba(226, 232, 240, 0.4)"),
+            yaxis=dict(gridcolor="rgba(226, 232, 240, 0.4)")
+        )
+        st.plotly_chart(fig_scatter, use_container_width=True)
+    else:
+        st.info("No stock data available for Scatter Plot.")
 
     # 5. MULTI-VIEW MATERIALS ANALYSIS
     st.markdown("### Material Filtering & Stock Value Distribution Analysis")
@@ -238,7 +288,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
     ]
     counts = [stage1_count, stage2_count, stage3_count, stage4_count, stage_transferred_count]
     values = [stage1_value, stage2_value, stage3_value, stage4_value, transferred_stock_value]
-    text_labels = [f"{c} Materials<br>${v:,.0f}" for c, v in zip(counts, values)]
+    text_labels = [f" {c} Materials<br>${v:,.0f}" for c, v in zip(counts, values)]
 
     if layout_choice == "Modern 3D Funnel Flow":
         fig_funnel = go.Figure(go.Funnel(
@@ -248,7 +298,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
             text=text_labels,
             hoverinfo="y+text",
             marker=dict(
-                color=["#1e3a8a", "#2563eb", "#3b82f6", "#ef4444", "#10b981"],
+                color=["#1e3a8a", "#2563eb", "#3b82f6", "#ff4d6d", "#06d6a0"],
                 line=dict(color="#ffffff", width=2)
             ),
             connector=dict(fillcolor="rgba(226, 232, 240, 0.4)", line=dict(color="#cbd5e1", width=1))
@@ -281,7 +331,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
                 thickness=20,
                 line=dict(color="#ffffff", width=1.5),
                 label=label_nodes,
-                color=["#1e3a8a", "#2563eb", "#94a3b8", "#3b82f6", "#64748b", "#ef4444", "#10b981"]
+                color=["#1e3a8a", "#2563eb", "#94a3b8", "#3b82f6", "#64748b", "#ff4d6d", "#06d6a0"]
             ),
             link=dict(
                 source=[0, 0, 1, 1, 3, 3],
@@ -312,7 +362,6 @@ if uploaded_materials is not None and uploaded_prices is not None:
         st.header("📦 Download the Results")
         if not Interested_plant.empty:
             buffer = io.BytesIO()
-            # Avoid saving extra temp interactive column to the export file
             export_df = Interested_plant.drop(columns=['Total Value'], errors='ignore')
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
                 export_df.to_excel(writer, index=False, sheet_name=f'{plant}_Materials')
