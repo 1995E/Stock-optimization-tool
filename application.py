@@ -421,7 +421,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
             st.download_button(
                 label=f"📥 {plant} Materials for Scrap (Excel)",
                 data=buffer,
-                file_name=f"{plant}_interested_materials.xlsx",
+                file_name=f"{plant}_potential_materials_for_scrap.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
         else:
