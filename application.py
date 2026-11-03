@@ -266,7 +266,7 @@ if uploaded_materials is not None and uploaded_prices is not None:
               pad = 20,
               thickness = 25,
               line = dict(color = "gray", width = 0.5),
-              label=label_nodes
+              label = ["Initial Pool", "PD/V1 Classified", "Excluded Category", "Active Stock (Other Plants)", f"{plant} Inventory", "To Be Scrapped", "To Be Transferred"],
               color = ["#1A365D", "#2B6CB0", "#E53E3E", "#4299E1", "#319795", "#E53E3E", "#3182CE"]
             ),
             link = dict(
