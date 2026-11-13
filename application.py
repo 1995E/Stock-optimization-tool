@@ -1,64 +1,24 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
+import plotly.express as px 
 import numpy as np
 import io
+import re
 
 st.set_page_config(
-    page_title="Material Analysis Dashboard",
+    page_title="PBF STOCK ANALYSE TOOL",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS to inject an ultra-clean modern corporate layout style and styled dividers
-st.markdown("""
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
-        html, body, [class*="css"] {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        .main {
-            background-color: #f8fafc;
-        }
-        .metric-card {
-            background-color: #ffffff;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            border-top: 4px solid #0f172a;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        .metric-card h6 {
-            color: #475569;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 8px;
-        }
-        .metric-card h3 {
-            color: #0f172a;
-            font-family: 'Inter', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin: 0;
-        }
-        /* Premium custom divider style */
-        .custom-divider {
-            margin-top: 2.5rem;
-            margin-bottom: 2.5rem;
-            border: 0;
-            height: 1px;
-            background-image: linear-gradient(to right, rgba(148, 163, 184, 0), rgba(148, 163, 184, 0.4), rgba(148, 163, 184, 0));
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-st.title("📦 Material Overview & Stock Analysis")
-st.markdown("Retrieve structured insights, classify inventory status, and assess material for scrapping or to be transferred.")
+# CHOOSE THE IMPACTED PLANT IN SIDEBAR
+with st.sidebar:
+    st.markdown("### 🚢 Plant Selection")
+    plant = st.selectbox(
+        "Select the impacted Plant:",
+        ['GIRASSOL', 'DALIA', 'PAZFLOR', 'CLOV', 'GENERAL DIVISION'],
+    )
 
 # 1. FILE UPLOADERS IN SIDEBAR
 with st.sidebar:
@@ -66,6 +26,85 @@ with st.sidebar:
     uploaded_materials = st.file_uploader("Material Overview per Plant (Excel)", type=["xlsx"])
     uploaded_prices = st.file_uploader("Material Overview per Price (Excel)", type=["xlsx"])
     st.markdown("---")
+    Bom_template = st.file_uploader("Impacted Bom (Excel)", type=["xlsx"])
+    st.markdown("---")
+
+st.markdown(f"""
+    <style>
+        .main-header {{
+            font-size: 2.2rem;
+            color: #303947;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            font-family: serif;
+        }}
+        .section-gap {{
+            margin-top: 35px;
+            margin-bottom: 35px;
+        }}
+        .kpi-gap {{
+            margin-top: 25px;
+            margin-bottom: 25px;
+        }}
+        .kpi-title {{
+            font-size: 1.45rem !important;
+            font-weight: bold;
+            margin-bottom: 0.75rem;
+            color: #1E3A8A;
+        }}
+        .metric-card {{
+            background-color: #F8FAFC;
+            padding: 1.25rem;
+            border-radius: 12px;
+            border-left: 6px solid #3B82F6;
+            border-top: 1px solid #E2E8F0;
+            border-right: 1px solid #E2E8F0;
+            border-bottom: 1px solid #E2E8F0;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+            margin-bottom: 1rem;
+            min-height: 135px;
+        }}
+        .metric-label {{
+            font-size: 0.85rem;
+            color: #64748B;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.75px;
+        }}
+        .metric-value {{
+            font-size: 1.65rem;
+            color: #0F172A;
+            font-weight: 800;
+            margin-top: 0.25rem;
+        }}
+        .metric-subvalue {{
+            font-size: 0.85rem;
+            color: #475569;
+            margin-top: 0.2rem;
+        }}
+        /* Card Container styling */
+        .chart-card {{
+            background-color: #FFFFFF;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }}
+        /* Optimize Progress Bar Size */
+        .stProgress > div > div > div {{
+            height: 28px !important;
+            border-radius: 8px;
+        }}
+        /* Target Streamlit Progress Bar fill */
+        .stProgress > div > div > div > div {{
+            background-color: #EF4444 !important;
+        }}
+    </style>
+""", unsafe_allow_html=True)
+
+# Modern Title
+st.markdown("<div class=\"main-header\"> STOCK ANALYSE TOOL</div>", unsafe_allow_html=True)
 
 if uploaded_materials is not None and uploaded_prices is not None:
     # Read DataFrames
@@ -79,352 +118,442 @@ if uploaded_materials is not None and uploaded_prices is not None:
 
     requested_columns = [
         'Material n°', 'Material description', 'Material discipline',
-        'Plant code', 'Plant', 'storage bin', 'FASD', 'Blocking status',
+        'Plant code', 'Plant', 'Storage bin', 'FASD', 'Blocking status',
         'MRP Type', 'Stock qty', 'Blocked Stock Qty', 'Safety', 'Min',
         'Max', 'Unit price'
     ]
     existing_columns = [col for col in requested_columns if col in removed_materials_df.columns]
     df = removed_materials_df[existing_columns].copy()
 
-    # DYNAMIC PLANT SELECTOR IN SIDEBAR
-    with st.sidebar:
-        available_plants = sorted(df['Plant'].dropna().unique())
-        plant = st.selectbox(
-            "Select Plant of Interest:",
-            available_plants,
-            index=0 if 'PAZFLOR' not in available_plants else available_plants.index('PAZFLOR')
-        )
-
-    # Perform calculations based on selection
+    # Perform calculations
     Total_removed_materials = df['Material n°'].nunique()
     pd_v1_df = df[df['MRP Type'].isin(['PD', 'V1'])].copy()
     pd_v1_unique_materials = pd_v1_df.drop_duplicates(subset=['Material n°'])
-
     stock_greater_zero = pd_v1_df[pd_v1_df['Stock qty'] > 0]
-    stock_greater_zero_unique = pd_v1_df[pd_v1_df['Stock qty'] > 0].drop_duplicates(subset=['Material n°']).copy()
 
     Interested_plant = stock_greater_zero[stock_greater_zero['Plant'] == plant].copy()
     Interested_plant_unique = Interested_plant.drop_duplicates(subset=['Material n°']).copy()
 
-    Total_stock_value = (stock_greater_zero['Stock qty'] * stock_greater_zero['Unit price']).sum()
+    Others_plant = pd_v1_df[pd_v1_df['Plant'] != plant].copy()
+    Others_plant_unique = Others_plant.drop_duplicates(subset=['Material n°']).copy()
+
+    Total_stock_value = (stock_greater_zero['Stock qty'] *  stock_greater_zero['Unit price']).sum()
     Interested_plant_stock_value = (Interested_plant['Stock qty'] * Interested_plant['Unit price']).sum()
+    Others_plant_stock_value = Total_stock_value - Interested_plant_stock_value
 
-    # Categorization logic
-    other_active_materials = pd_v1_df [
-        (pd_v1_df['Plant'] != plant) &
-        (pd_v1_df['FASD'].str.upper() != 'DEAD')
-    ]['Material n°'].unique()
+    # DYNAMIC GROUPING BY DESCRIPTION CHARACTERISTIC
+    if not Interested_plant.empty:
+        parsed_records = []
+        for idx, row in Interested_plant.iterrows():
+            desc = row['Material description']
+            if pd.isna(desc):
+                parsed_records.append({'idx': idx, 'first': 'UNKNOWN', 'second': ''})
+                continue
+            desc_str = str(desc).upper()
+            parts = desc_str.split(',')
 
-    def categorize_material(row):
-        mat_no = row['Material n°']
-        if mat_no in other_active_materials:
-            return 'TO BE TRANSFERRED'
-        else:
-            return 'TO BE SCRAPPED'
+            # First keyword before first comma
+            first_part = parts[0]
+            first_tokens = [t.strip() for t in re.sub(r'[^A-Z0-9\s-]', ' ', first_part).split() if len(t.strip()) > 2]
+            first_key = first_tokens[0] if len(first_tokens) > 0 else 'OTHER'
+
+            # Second keyword after first comma
+            second_key = ''
+            if len(parts) > 1:
+                second_part = parts[1]
+                second_tokens = [t.strip() for t in re.sub(r'[^A-Z0-9\s-]', ' ', second_part).split() if len(t.strip()) > 2]
+                second_key = second_tokens[0] if len(second_tokens) > 0 else ''
+
+            parsed_records.append({'idx': idx, 'first': first_key, 'second': second_key})
+
+        parsed_df = pd.DataFrame(parsed_records)
+
+        # Grouping mechanics
+        char_mapping = {}
+        for first_val, group in parsed_df.groupby('first'):
+            unique_seconds = group['second'].unique()
+            valid_seconds = [s for s in unique_seconds if s != '']
+
+            if len(valid_seconds) == 1:
+                mapped_name = f"{first_val} {valid_seconds[0]}"
+            else:
+                mapped_name = first_val
+
+            for row_idx in group['idx']:
+                char_mapping[row_idx] = mapped_name
+
+        Interested_plant['Description Characteristic'] = Interested_plant.index.map(char_mapping).fillna('OTHER')
+    else:
+        Interested_plant['Description Characteristic'] = pd.Series(dtype='str')
+
+    Interested_plant['Stock Value'] = Interested_plant['Stock qty'] * Interested_plant['Unit price'].fillna(0)
+
+    # UPDATE INTERESTED PLANT DATAFRAME WITH ACTION COLUMN FROM IMPACTED BOM BEFORE DISPLAYING KPIs
+    scrap_value = 0.0
+    transfer_value = 0.0
+    bom_loaded = False
+    materials_to_transfer = pd.DataFrame()
+    scrap_df = pd.DataFrame()
+
+    if Bom_template is not None:
+        try:
+            material_list_df = pd.read_excel(Bom_template, sheet_name="Material_List")
+            material_list_df.columns = material_list_df.columns.str.strip()
+
+            # Clean mapping IDs
+            material_list_df['Material n°'] = material_list_df['Material n°'].astype(str).str.strip()
+            Interested_plant['Material n°'] = Interested_plant['Material n°'].astype(str).str.strip()
+            Others_plant['Material n°'] = Others_plant['Material n°'].astype(str).str.strip()
+
+            action_mapping = material_list_df.set_index('Material n°')['Results'].to_dict()
+            Interested_plant['Action'] = Interested_plant['Material n°'].map(action_mapping)
+            Interested_plant['Optimization Status'] = 'Standard'
+
+            # Rule: Action update
+            mask = (Interested_plant['Action'] == 'FASD analyse') & (Interested_plant['FASD'] == 'Dead')
+            Interested_plant.loc[mask, 'Action'] = 'Scrap analyse'
+            Interested_plant.loc[mask, 'Optimization Status'] = 'Optimized'
+
+            scrap_analyse_materials = Interested_plant[Interested_plant['Action'] == 'Scrap analyse']['Material n°'].unique()
+            active_others_df = Others_plant[(Others_plant['Material n°'].isin(scrap_analyse_materials)) & (Others_plant['FASD'] != 'Dead')].copy()
+
+            priority_map = {'FAST': 1, 'Active': 2, 'Slow': 3}
+            active_others_df['Priority'] = active_others_df['FASD'].map(priority_map).fillna(4)
+            active_others_df = active_others_df.sort_values(by=['Material n°', 'Priority'])
+            best_receiving_plants = active_others_df.drop_duplicates(subset=['Material n°']).set_index('Material n°')
+
+            transfer_material_ids = best_receiving_plants.index.unique()
+
+            raw_transfer_df = Interested_plant[Interested_plant['Material n°'].isin(transfer_material_ids)].copy()
+            Interested_plant = Interested_plant[~Interested_plant['Material n°'].isin(transfer_material_ids)].copy()
+
+            if not raw_transfer_df.empty:
+                raw_transfer_df['Receiving plant'] = raw_transfer_df['Material n°'].map(best_receiving_plants['Plant'])
+                raw_transfer_df['Receiving quantity'] = raw_transfer_df['Stock qty']
+
+                target_cols = [
+                    'Material n°', 'Material description', 'Material discipline',
+                    'Plant code', 'Plant', 'Storage bin', 'FASD', 'Stock qty',
+                    'Receiving plant', 'Receiving quantity', 'Unit price',
+                ]
+                existing_target_cols = [c for c in target_cols if c in raw_transfer_df.columns]
+                materials_to_transfer = raw_transfer_df[existing_target_cols].copy()
+                transfer_value = (materials_to_transfer['Stock qty'] * materials_to_transfer['Unit price']).sum()
+            else:
+                materials_to_transfer = pd.DataFrame()
+                transfer_value = 0.0
+
+            scrap_df = Interested_plant[Interested_plant['Action'] == 'Scrap analyse'].copy()
+            scrap_value = (scrap_df['Stock qty'] * scrap_df['Unit price']).sum()
+
+            bom_loaded = True
+        except Exception as e:
+            st.error(f"Error reading Material_List from Impacted Bom: {e}")
+
+    # Calculate values if not yet set
+    if 'Calculated Value' not in Interested_plant.columns and not Interested_plant.empty:
+        Interested_plant['Calculated Value'] = Interested_plant['Stock qty'] * Interested_plant['Unit price'].fillna(0)
+
+    # Calculate Potential Scrap Ratio
+    scrap_ratio = 0.0
+    if Interested_plant_stock_value > 0:
+        scrap_ratio = (scrap_value / Interested_plant_stock_value) * 100
+        remaining_crap = 100 - scrap_ratio
+
+    # 3. EXECUTIVE KPI CARDS - 5 columns
+    kpi_cols = st.columns(5)
+
+    # Card 1
+    with kpi_cols[0]:
+        st.markdown(f"""
+            <div class="metric-card" style="border-left-color: #1E3A8A">
+                <div class="metric-label">Total Material Assessed</div>
+                <div class="metric-value">{Total_removed_materials:,}</div>
+                <div class="metric-subvalue">stock and non-stocked materials</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # Card 2
+    with kpi_cols[1]:
+        st.markdown(f"""
+            <div class="metric-card" style="border-left-color: #10B981">
+                <div class="metric-label">Total Stock Value</div>
+                <div class="metric-value">${Total_stock_value:,.0f}</div>
+                <div class="metric-subvalue"><b>{len(pd_v1_unique_materials):,}</b> stock materials</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # Card 3
+    with kpi_cols[2]:
+        st.markdown(f"""
+            <div class="metric-card" style="border-left-color: #F59E0B">
+                <div class="metric-label">{plant} Stock Value</div>
+                <div class="metric-value">${Interested_plant_stock_value:,.0f}</div>
+                <div class="metric-subvalue"><b>{len(Interested_plant_unique):,}</b> stock materials</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # Card 4
+    with kpi_cols[3]:
+        scrap_val_str = f"${scrap_value:,.0f}" if bom_loaded else "N/A (Load BOM)"
+        sub_str = f"<b>${transfer_value:,.0f}</b> to be transferred" if bom_loaded else "N/A (Load BOM)"
+        st.markdown(f"""
+            <div class="metric-card" style="border-left-color: #EF4444">
+                <div class="metric-label">{plant} Potential Scrap</div>
+                <div class="metric-value">{scrap_val_str}</div>
+                <div class="metric-subvalue">-{sub_str}</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # Card 5
+    with kpi_cols[4]:
+        scrap_pct_str = f"{scrap_ratio:.0f}%" if bom_loaded else "N/A (Load BOM)"
+        remaining_pct_val = remaining_crap if bom_loaded else 0.0
+        st.markdown(f"""
+            <div class="metric-card" style="border-left-color: #7C3AED; background-color: #FAF5FF;">
+                <div class="metric-label">Potential Scrap Ratio</div>
+                <div class="metric-value" style="color: #EF4444;">{scrap_pct_str}</div>
+                <div class="metric-subvalue">{remaining_pct_val:.0f}% to be kept in {plant}</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # 4. EXECUTIVE TABS
+    st.markdown('<div class="section-gap"></div>', unsafe_allow_html=True)
+    tab1, tab2, tab3 = st.tabs(["📊 DISPLAY CHARTS", "🔍 CHARTS FOR MATERIAL GROUP", "📋 DETAILED DATASET"])
+
+    selected_char = None
+    filtered_by_char = pd.DataFrame()
 
     if not Interested_plant.empty:
-        Interested_plant['Category'] = Interested_plant.apply(categorize_material, axis=1)
-    else:
-        Interested_plant['Category'] = pd.Series(dtype='object')
+        unique_characteristics = sorted(list(Interested_plant['Description Characteristic'].dropna().unique()))
+        if unique_characteristics:
+            selected_char = unique_characteristics[0]
+            filtered_by_char = Interested_plant[Interested_plant['Description Characteristic'] == selected_char].copy()
 
-    # 3. HIGHLY VISUAL KPI METRICS SECTION
-    st.markdown("### MAIN HIGHLIGHT")
-    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    with tab1:
+        if bom_loaded:
+            st.markdown('<div class="kpi-gap"></div>', unsafe_allow_html=True)
+            if Interested_plant_stock_value > 0:
+                st.progress(scrap_ratio / 100.0)
+                st.markdown(f"**{scrap_ratio:.0f}%** of {plant} STOCK VALUE IDENTIFIED FOR POTENTIAL SCRAPPING")
+            else:
+                st.info("No stock value for selected plant to calculate scrapping progress.")
 
-    with kpi1:
-        st.markdown(f'<div class="metric-card"><h6>Total Removed Materials</h6><h3>{Total_removed_materials:,}</h3></div>', unsafe_allow_html=True)
-    with kpi2:
-        st.markdown(f'<div class="metric-card"><h6>TOTAL STOCK MATERIALS</h6><h3>{len(pd_v1_unique_materials):,}</h3></div>', unsafe_allow_html=True)
-    with kpi3:
-        st.markdown(f'<div class="metric-card"><h6>TOTAL STOCK VALUE (USD)</h6><h3>${Total_stock_value:,.2f}</h3></div>', unsafe_allow_html=True)
-    with kpi4:
-        st.markdown(f'<div class="metric-card"><h6>POTENTIAL {plant} DEAD STOCK VALUE(USD)</h6><h3>${Interested_plant_stock_value:,.2f}</h3></div>', unsafe_allow_html=True)
+            st.markdown('<hr style="border: 1px solid #E2E8F0; margin-top: 20px; margin-bottom: 15px;">', unsafe_allow_html=True)
 
-    # Separator after KPIs
-    st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
+            col_left, col_right = st.columns([1.0, 1.0])
+            with col_left:
+                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+                st.markdown("##### STOCK DISTRIBUTION OVERVIEW")
 
-    # 4. INTERACTIVE CHARTS (HEATMAP & PIE)
-    st.markdown("### Distribution and Visual Categorization Insights")
+                bar_data = [
+                    {"Category": "Total Stock Value", "Type": "All plant", "Value": Total_stock_value},
+                    {"Category": "Stock Distribution", "Type": f"{plant}", "Value": Interested_plant_stock_value},
+                    {"Category": "Stock Distribution", "Type": "Others plant", "Value": Others_plant_stock_value},
+                    {"Category": f"{plant} Scrap Result", "Type": f"{plant} Potential value for scrapping", "Value": scrap_value},
+                    {"Category": f"{plant} Scrap Result", "Type": "Transferred value", "Value": transfer_value}
+                ]
+                bar_df = pd.DataFrame(bar_data)
+                sorted_cats = ["Total Stock Value", "Stock Distribution", f"{plant} Scrap Result"]
 
-    if not Interested_plant.empty:
-        col_left, col_right = st.columns(2)
+                bar_fig = px.bar(
+                    bar_df,
+                    y="Category",
+                    x="Value",
+                    color="Type",
+                    orientation='h',
+                    category_orders={"Category": sorted_cats},
+                    color_discrete_map={
+                        "All plant": "#1E3A5F",
+                        f"{plant}": "#2563EB",
+                        "Others plant": "#94A3B8",
+                        f"{plant} Potential value for scrapping": "#D97706",
+                        "Transferred value": "#059669"
+                    }
+                )
+                bar_fig.update_layout(
+                    barmode='stack',
+                    yaxis_title=None,
+                    xaxis_title="Value ($)",
+                    height=380,
+                    margin=dict(t=10, b=10, l=10, r=10),
+                    legend=dict(orientation="h", y=-0.25, xanchor="center", x=0.5)
+                )
+                bar_fig.update_traces(width=0.8)
+                st.plotly_chart(bar_fig, use_container_width=True)
+                st.markdown('</div>', unsafe_allow_html=True)
 
-        with col_left:
-            cross_tab = pd.crosstab(Interested_plant['FASD'], Interested_plant['Category'])
-            # IMPROVED COLOR: 'Ice' or 'deep' offers exceptionally clear, professional stakeholder visualization
-            fig_heat = px.imshow(
-                cross_tab,
-                text_auto=True,
-                aspect="auto",
-                color_continuous_scale="ice",
-                labels=dict(x="Category", y="FASD Status", color="Material Quantity"),
-                title="Distribution per FASD Status"
-            )
-            fig_heat.update_layout(
-                margin=dict(l=40, r=40, t=60, b=40),
-                plot_bgcolor="rgba(0,0,0,0)",
-                paper_bgcolor="rgba(0,0,0,0)",
-                font=dict(family="Inter, sans-serif", size=12)
-            )
-            st.plotly_chart(fig_heat, use_container_width=True)
+            with col_right:
+                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+                st.markdown("##### STOCK VALUE PER FASD STATUS")
 
-        with col_right:
-            category_counts = Interested_plant['Category'].value_counts().reset_index()
-            category_counts.columns = ['Category', 'Count']
+                if not scrap_df.empty:
+                    scrap_df['Stock Value'] = scrap_df['Stock qty'] * scrap_df['Unit price'].fillna(0)
+                    fasd_df = scrap_df.groupby('FASD')['Stock Value'].sum().reset_index()
+                    fasd_df = fasd_df.sort_values(by='Stock Value', ascending=True)
 
-            # IMPROVED COLORS: Muted Slate Gray for Scrapped, Executive Cyan/Blue for Transferred
-            color_map = {"TO BE SCRAPPED": "#334155", "TO BE TRANSFERRED": "#0284c7"}
-            fig_pie = px.pie(
-                category_counts,
-                values='Count',
-                names='Category',
-                hole=0.45,
-                color='Category',
-                color_discrete_map=color_map,
-                title="General Classification Distribution"
-        
-            )
-            fig_pie.update_traces(textinfo='percent+label', pull=[0.02] * len(category_counts))
-            fig_pie.update_layout(
-                showlegend=True,
-                legend=dict(orientation="h", yanchor="bottom", y=-0.1, xanchor="center", x=0.5),
-                margin=dict(l=40, r=40, t=60, b=40),
-                paper_bgcolor="rgba(0,0,0,0)",
-                font=dict(family="Inter, sans-serif", size=12)
-            
-            )
-            st.plotly_chart(fig_pie, use_container_width=True)
-    else:
-        st.warning(f"No stock records found for plant: {plant}")
-
-    # Separator before Advanced Insights
-    st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
-
-    # NEW INTERACTIVE ANALYSIS SECTION
-    st.markdown("### 🔍 Advanced Stock Insights")
-    col_new1, col_new2 = st.columns(2)
-
-    with col_new1:
-        st.markdown("**FASD Status vs. Stock Value Distribution**")
-        if not Interested_plant.empty:
-            Interested_plant['Total Value'] = Interested_plant['Stock qty'] * Interested_plant['Unit price']
-            # Clean, premium grey-blue palette suited for corporate boards
-            fig_box = px.box(
-                Interested_plant,
-                x='FASD',
-                y='Total Value',
-                color='FASD',
-                points="all",
-                color_discrete_sequence=px.colors.sequential.Plotly3_r,
-               
-            )
-            fig_box.update_layout(
-                plot_bgcolor="rgba(0,0,0,0)",
-                paper_bgcolor="rgba(0,0,0,0)",
-                yaxis_title="Value per Stock Item (USD)",
-                xaxis_title="FASD Movement Code",
-                margin=dict(t=40, l=40, r=40, b=40),
-                font=dict(family="Inter, sans-serif", size=12)
-            )
-            st.plotly_chart(fig_box, use_container_width=True)
+                    fasd_bar_fig = px.bar(
+                        fasd_df,
+                        y='FASD',
+                        x='Stock Value',
+                        orientation='h',
+                        color_discrete_sequence=['#475569'],
+                        text_auto='.2s'
+                    )
+                    fasd_bar_fig.update_layout(
+                        yaxis_title=None,
+                        height=380,
+                        margin=dict(t=10, b=10, l=10, r=10)
+                    )
+                    st.plotly_chart(fasd_bar_fig, use_container_width=True)
+                else:
+                    st.info("No data available for FASD breakdown.")
+                st.markdown('</div>', unsafe_allow_html=True)
         else:
-            st.info("No stock data available to display Box Distribution.")
+            st.info("💡 Please upload the Impacted BOM template to preview interactive visualization panels!")
 
-    with col_new2:
-        st.markdown("**Discipline Breakdown by Financial Category**")
-        if not Interested_plant.empty:
-            discipline_group = Interested_plant.groupby(['Material discipline', 'Category'])['Total Value'].sum().reset_index()
-            fig_bar_group = px.bar(
-                discipline_group,
-                x="Material discipline",
-                y="Total Value",
-                color="Category",
-                barmode="group",
-                color_discrete_map={"TO BE SCRAPPED": "#334155", "TO BE TRANSFERRED": "#0284c7"},
-              
-            )
-            fig_bar_group.update_layout(
-                plot_bgcolor="rgba(0,0,0,0)",
-                paper_bgcolor="rgba(0,0,0,0)",
-                yaxis_title="Total Financial Value (USD)",
-                font=dict(family="Inter, sans-serif", size=12)
-            )
-            st.plotly_chart(fig_bar_group, use_container_width=True)
+    with tab2:
+        if bom_loaded:
+            if not Interested_plant.empty:
+                col_sel_left, col_sel_right = st.columns([1.0, 2.0])
+
+                with col_sel_left:
+                    st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+                    st.markdown("##### 🔍 FILTER BY CHARACTERISTIC")
+                    unique_characteristics = sorted(list(Interested_plant['Description Characteristic'].dropna().unique()))
+                    selected_char = st.selectbox(
+                        "Choose a material group:",
+                        options=unique_characteristics,
+                        index=0,
+                        key="char_select_tab_dedicated"
+                    )
+                    filtered_by_char = Interested_plant[Interested_plant['Description Characteristic'] == selected_char].copy()
+
+                    if not filtered_by_char.empty:
+                        grp_stock_val = filtered_by_char['Stock Value'].sum()
+                        pred_fasd = filtered_by_char.groupby('FASD')['Stock qty'].sum().idxmax() if not filtered_by_char.dropna(subset=['FASD']).empty else 'N/A'
+                        st.markdown(f"""
+                            <div style="margin-top: 20px;">
+                                <p style="margin-bottom:2px; font-weight:bold; color:#64748B;">ASSOCIATED STOCK VALUE</p>
+                                <h3 style="margin-top:0px; color:#1E3A8A;">${grp_stock_val:,.2f}</h3>
+                                <p style="margin-bottom:2px; font-weight:bold; color:#64748B;">PREDOMINANT FASD STATUS</p>
+                                <h4 style="margin-top:0px; color:#EF4444;">{pred_fasd}</h4>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+                with col_sel_right:
+                    st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+                    if not filtered_by_char.empty:
+                        st.markdown(f"##### STOCK VALUE FOR {selected_char}")
+                        char_fasd_data = filtered_by_char.groupby('FASD')['Stock Value'].sum().reset_index()
+
+                        bar_grp_fig = px.bar(
+                            char_fasd_data,
+                            x='FASD',
+                            y='Stock Value',
+                            labels={'Stock Value': 'Total Stock Value ($)'},
+                            color='FASD',
+                            color_discrete_sequence=px.colors.qualitative.Pastel
+                        )
+                        bar_grp_fig.update_traces(width=0.2)
+                        bar_grp_fig.update_layout(height=220, margin=dict(t=10, b=10, l=5, r=5))
+                        st.plotly_chart(bar_grp_fig, use_container_width=True)
+                    else:
+                        st.info("No data available for the chosen group.")
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+                # DISPLAY SUBSET OF MATERIALS HERE IN THE GROUP TAB
+                if not filtered_by_char.empty:
+                    st.markdown(f"##### 📋 Materials belonging to group: **{selected_char}**")
+                    st.dataframe(filtered_by_char, use_container_width=True)
+            else:
+                st.info("No data to display group analysis.")
         else:
-            st.info("No stock data available for Discipline breakdown.")
+            st.info("💡 Please upload the Impacted BOM template to preview interactive visualization panels!")
 
-    # Separator before Operational Scatter
-    st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
+    with tab3:
+        if bom_loaded:
+            # CUSTOMIZABLE POTENTIAL SCRAP LIST
+            st.markdown(f"### 📋 {plant} potential material list for scrapping")
 
-    # ADDED ADDITIONAL STOCK METRICS INTERACTIVE ANALYSIS
-    st.markdown("### 📈 Advanced Operational Scatter")
-    if not Interested_plant.empty:
-        fig_scatter = px.scatter(
-            Interested_plant,
-            x="Stock qty",
-            y="Unit price",
-            color="Category",
-            size="Total Value",
-            hover_data=["Material n°", "Material description"],
-            color_discrete_map={"TO BE SCRAPPED": "#334155", "TO BE TRANSFERRED": "#0284c7"},
-            title="Interactive Material Outlier Mapping (Size = Financial Value)"
-        )
-        fig_scatter.update_layout(
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
-            xaxis=dict(gridcolor="rgba(226, 232, 240, 0.4)"),
-            yaxis=dict(gridcolor="rgba(226, 232, 240, 0.4)"),
-            font=dict(family="Inter, sans-serif", size=12)
-        )
-        st.plotly_chart(fig_scatter, use_container_width=True)
-    else:
-        st.info("No stock data available for Scatter Plot.")
+            # Add interactive search filter for scrap list
+            with st.expander("🔍 Customize Scrap List Filters", expanded=False):
+                col_sc1, col_sc2 = st.columns(2)
+                with col_sc1:
+                    scrap_search = st.text_input("Search Material n° or Description (Scrap List):", "")
+                with col_sc2:
+                    all_sc_disciplines = sorted(list(scrap_df['Material discipline'].dropna().unique())) if not scrap_df.empty else []
+                    selected_sc_disc = st.multiselect("Filter by Discipline (Scrap List):", options=all_sc_disciplines, default=all_sc_disciplines)
 
-    # Separator before Flow Funnel Analysis
-    st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
+            display_columns = [
+                'Material n°', 'Material description', 'Material discipline',
+                'Plant code', 'Plant', 'Storage bin', 'FASD', 'Blocking status',
+                'MRP Type', 'Stock qty', 'Blocked Stock Qty', 'Safety', 'Min',
+                'Max', 'Unit price', 'Action', 'Optimization Status', 'Description Characteristic'
+            ]
+            existing_display_cols = [col for col in display_columns if col in Interested_plant.columns]
+            Interested_plant_display = Interested_plant[existing_display_cols].copy()
 
-    # 5. MULTI-VIEW MATERIALS ANALYSIS
-    st.markdown("### Material Filtering & Stock Value Distribution Analysis")
+            # Apply user customizations
+            if scrap_search:
+                Interested_plant_display = Interested_plant_display[
+                    Interested_plant_display['Material n°'].astype(str).str.contains(scrap_search, case=False) |
+                    Interested_plant_display['Material description'].astype(str).str.contains(scrap_search, case=False)
+                ]
+            if selected_sc_disc:
+                Interested_plant_display = Interested_plant_display[Interested_plant_display['Material discipline'].isin(selected_sc_disc)]
 
-    layout_choice = st.radio(
-        "Select visualization layout:",
-        ["Modern 3D Funnel Flow", "Sankey Flow Diagram (Highly Interactive)"],
-        horizontal=True
-    )
+            st.dataframe(Interested_plant_display, use_container_width=True)
 
-    stage1_count = df['Material n°'].nunique()
-    stage1_value = (df[df['Stock qty'] > 0].eval('`Stock qty` * `Unit price`')).sum()
-    if pd.isna(stage1_value) or stage1_value == 0:
-        stage1_value = Total_stock_value
-
-    stage2_count = len(pd_v1_unique_materials)
-    stage2_value = (pd_v1_df[pd_v1_df['Stock qty'] > 0].eval('`Stock qty` * `Unit price`')).sum()
-
-    stage3_count = len(stock_greater_zero_unique)
-    stage3_value = Total_stock_value
-
-    transferred_df = Interested_plant[Interested_plant['Category'] == 'TO BE TRANSFERRED']
-    stage_transferred_count = transferred_df['Material n°'].nunique()
-    transferred_stock_value = (transferred_df.eval('`Stock qty` * `Unit price`')).sum()
-
-    stage4_count = len(Interested_plant_unique) - stage_transferred_count
-    stage4_value = Interested_plant_stock_value - transferred_stock_value
-
-    # Rest of plants calculation
-    other_plants_unique_count = stage3_count - len(Interested_plant_unique)
-    other_plants_unique_value = stage3_value - Interested_plant_stock_value
-
-    # Excluded steps calculation
-    non_stock_count = stage1_count - stage2_count
-    zero_stock_count = stage2_count - stage3_count
-
-    stages = [
-        "Total Removed Materials",
-        "Total Stock Materials",
-        "Material with Stock Qty > 0 (All Plants)",
-        f"Potential {plant} Dead Stock Material",
-        f"Stock Materials to be Transferred from ({plant})"
-    ]
-    counts = [stage1_count, stage2_count, stage3_count, stage4_count, stage_transferred_count]
-    values = [stage1_value, stage2_value, stage3_value, stage4_value, transferred_stock_value]
-    text_labels = [f" {c} Materials<br>${v:,.0f}" for c, v in zip(counts, values)]
-
-    if layout_choice == "Modern 3D Funnel Flow":
-        fig_funnel = go.Figure(go.Funnel(
-            y=stages,
-            x=counts,
-            textinfo="text",
-            text=text_labels,
-            hoverinfo="y+text",
-            marker=dict(
-                color=["#0f172a", "#1e293b", "#334155", "#64748b", "#0284c7"],
-                line=dict(color="#ffffff", width=2)
-            ),
-            connector=dict(fillcolor="rgba(226, 232, 240, 0.4)", line=dict(color="#cbd5e1", width=1))
-        ))
-        fig_funnel.update_layout(
-            title_text="Sleek Progression Funnel Analysis",
-            title_x=0.5,
-            funnelmode="stack",
-            showlegend=False,
-            height=480,
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(family="Inter, sans-serif", size=12)
-        )
-        st.plotly_chart(fig_funnel, use_container_width=True)
-    else:
-        # ENHANCED SANKEY DIAGRAM (Includes both material quantity and stock financial value)
-        label_nodes = [
-            f"Total Materials<br>({stage1_count} Mat / ${stage1_value:,.0f})",
-            f"PD/V1 Qualified<br>({stage2_count} Mat / ${stage2_value:,.0f})",
-            f"Non-Stock (Excluded)<br>({non_stock_count} Mat)",
-            f"Active Stock (All Plants)<br>({stage3_count} Mat / ${stage3_value:,.0f})",
-            f"Other Plants Stock<br>({other_plants_unique_count} Mat / ${other_plants_unique_value:,.0f})",
-            f"{plant} Net Stock (Scrapped)<br>({stage4_count} Mat / ${stage4_value:,.0f})",
-            f"To Be Transferred ({plant})<br>({stage_transferred_count} Mat / ${transferred_stock_value:,.0f})"
-        ]
-
-        fig_sankey = go.Figure(data=[go.Sankey(
-            node=dict(
-                pad=24,
-                thickness=20,
-                line=dict(color="#ffffff", width=1.5),
-                label=label_nodes,
-                color=["#0f172a", "#1e293b", "#64748b", "#334155", "#94a3b8", "#475569", "#0284c7"]
-            ),
-            link=dict(
-                source=[0, 0, 1, 1, 3, 3],
-                target=[1, 2, 3, 4, 5, 6],
-                # Quantities represent the raw link weights
-                value=[
-                    stage2_count,
-                    max(1, non_stock_count),
-                    stage3_count,
-                    max(1, other_plants_unique_count),
-                    stage4_count,
-                    stage_transferred_count
-                ],
-                # Custom tooltip text showing both quantity and financial value
-                customdata=[
-                    f"PD/V1 Qualified Flow: {stage2_count} Materials (${stage2_value:,.0f})",
-                    f"Non-Stock Outflow: {non_stock_count} Materials",
-                    f"Active Stock Flow: {stage3_count} Materials (${stage3_value:,.0f})",
-                    f"Other Plants Allocation: {other_plants_unique_count} Materials (${other_plants_unique_value:,.0f})",
-                    f"Local Scrapping Flow: {stage4_count} Materials (${stage4_value:,.0f})",
-                    f"Transfer Flow: {stage_transferred_count} Materials (${transferred_stock_value:,.0f})"
-                ],
-                hovertemplate="%{customdata}<extra></extra>",
-                color="rgba(2, 132, 199, 0.15)"
-            )
-        )])
-        fig_sankey.update_layout(
-            title_text="Dynamic Stock Lifecycle Flow & Transitions",
-            title_x=0.5,
-            height=500,
-            font=dict(family="Inter, sans-serif", size=12),
-            paper_bgcolor="rgba(0,0,0,0)"
-        )
-        st.plotly_chart(fig_sankey, use_container_width=True)
-
-    # 6. EXPORT ACTION IN SIDEBAR
-    with st.sidebar:
-        st.markdown("--- ")
-        st.header("📦 Download the Results")
-        if not Interested_plant.empty:
-            buffer = io.BytesIO()
-            export_df = Interested_plant.drop(columns=['Total Value'], errors='ignore')
-            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                export_df.to_excel(writer, index=False, sheet_name=f'{plant}_Materials')
-            buffer.seek(0)
-
+            # Export Option
+            buffer_interested = io.BytesIO()
+            with pd.ExcelWriter(buffer_interested, engine='openpyxl') as writer:
+                Interested_plant_display.to_excel(writer, index=False, sheet_name='Interested Plant')
             st.download_button(
-                label=f"📥 {plant} Materials for Scrap (Excel)",
-                data=buffer,
-                file_name=f"{plant}_potential_materials_for_scrap.xlsx",
+                label="📥 Download Custom Scrap Excel",
+                data=buffer_interested.getvalue(),
+                file_name=f"Customized_Scrap_List_{plant}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+
+            # CUSTOMIZABLE TRANSFER LIST
+            st.markdown(f"### 🔄 Potential materials to be transferred from {plant}")
+            if not materials_to_transfer.empty:
+                # Add interactive search filter for transfer list
+                with st.expander("🔍 Customize Transfer List Filters", expanded=False):
+                    col_tf1, col_tf2 = st.columns(2)
+                    with col_tf1:
+                        transfer_search = st.text_input("Search Material n° or Description (Transfer List):", "")
+                    with col_tf2:
+                        all_tf_disciplines = sorted(list(materials_to_transfer['Material discipline'].dropna().unique()))
+                        selected_tf_disc = st.multiselect("Filter by Discipline (Transfer List):", options=all_tf_disciplines, default=all_tf_disciplines)
+
+                materials_to_transfer_display = materials_to_transfer.copy()
+                if transfer_search:
+                    materials_to_transfer_display = materials_to_transfer_display[
+                        materials_to_transfer_display['Material n°'].astype(str).str.contains(transfer_search, case=False) |
+                        materials_to_transfer_display['Material description'].astype(str).str.contains(transfer_search, case=False)
+                    ]
+                if selected_tf_disc:
+                    materials_to_transfer_display = materials_to_transfer_display[materials_to_transfer_display['Material discipline'].isin(selected_tf_disc)]
+
+                st.dataframe(materials_to_transfer_display, use_container_width=True)
+
+                # Export Option
+                buffer_transfer = io.BytesIO()
+                with pd.ExcelWriter(buffer_transfer, engine='openpyxl') as writer:
+                    materials_to_transfer_display.to_excel(writer, index=False, sheet_name='Materials to Transfer')
+                st.download_button(
+                    label="📥 Download Custom Transfer Excel",
+                    data=buffer_transfer.getvalue(),
+                    file_name=f"Customized_Transfer_List_{plant}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            else:
+                st.info("No matching materials to transfer.")
         else:
-            st.info("No data available to export.")
+            st.markdown(f"### 📋 Interested Plant Materials for {plant}")
+            st.dataframe(pd_v1_df, use_container_width=True)
 else:
-    st.info("Please upload both Excel files in the sidebar to activate the dashboard.")
+    st.info("💡 Please upload both 'Material Overview per Plant' and 'Material Overview per Price' Excel files in the sidebar to get started!")
