@@ -5,7 +5,7 @@ import plotly.express as px
 import numpy as np
 import io
 import re
- 
+
 st.set_page_config(
     page_title="PBF STOCK ANALYSE TOOL",
     layout="wide",
@@ -104,7 +104,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # Modern Title
-st.markdown("<div class=\"main-header\"> LOREPSUM L</div>", unsafe_allow_html=True)
+st.markdown("<div class=\"main-header\"> Lorem Ipsum </div>", unsafe_allow_html=True)
 
 if uploaded_materials is not None and uploaded_prices is not None:
     # Read DataFrames
